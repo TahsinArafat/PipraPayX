@@ -1,0 +1,50 @@
+services:
+  app:
+    build: .
+    container_name: piprapay
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-piprapay}
+      DB_USER: ${DB_USER:-piprapay}
+      DB_PASSWORD: ${DB_PASSWORD:-piprapay}
+      DB_PREFIX: ${DB_PREFIX:-pp_}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      # Backups, imports and uploads persist on the host, next to the project
+      - ./pp-media/storage:/var/www/html/pp-media/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - piprapay
+
+  db:
+    image: mysql:8.0
+    container_name: piprapay-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-piprapay}
+      MYSQL_USER: ${DB_USER:-piprapay}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-piprapay}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - piprapay
+
+volumes:
+  db_data:
+
+networks:
+  piprapay:
