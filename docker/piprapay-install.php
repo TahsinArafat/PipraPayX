@@ -93,6 +93,6 @@ insertData($db_prefix . 'brands', ['brand_id', 'created_date', 'updated_date'], 
 insertData($db_prefix . 'currency', ['brand_id', 'code', 'symbol', 'created_date', 'updated_date'], [$brand_id, 'BDT', '৳', $now, $now]);
 
 echo "[PipraPay] Installation complete.\n";
-echo "[PipraPay] Login at http://localhost:" . (getenv('APP_PORT') ?: '8080') . "\n";
+echo "[PipraPay] Login with the domain you configured in Dokploy (Domains tab).\n";
 echo "[PipraPay] Username: $adminUsername\n";
 echo "[PipraPay] Password: $adminPassword\n";

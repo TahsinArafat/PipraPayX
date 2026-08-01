@@ -1,0 +1,15 @@
+# Local-development override. Dokploy ignores this file (it deploys
+# docker-compose.yml as-is), so run it explicitly:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+#
+# Re-adds the host port for http://localhost:8080 and creates the
+# dokploy-network locally instead of expecting Dokploy's external one.
+services:
+  app:
+    ports:
+      - "8080:80"
+
+networks:
+  dokploy-network:
+    external: false

@@ -6,9 +6,14 @@ into the image.
 
 ## Quick start
 
+Run locally with the local override (adds the host port and creates the
+Dokploy network locally):
+
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
+
+On Dokploy, just deploy `docker-compose.yml` as-is (see below).
 
 That is it. On first boot the container:
 
@@ -17,10 +22,25 @@ That is it. On first boot the container:
 3. creates the admin account,
 4. starts Apache.
 
-Open http://localhost:8080 and log in:
+Open your domain (e.g. `https://pay.jinnchat.net` on Dokploy, or
+`http://localhost:8080` for the local command above) and log in:
 
 - Username: `admin`
 - Password: see "Finding your password" below.
+
+## Deploying on Dokploy
+
+The compose file is already Dokploy-ready:
+
+- No host port mapping - the app only `expose`s port 80, so Traefik reaches it
+  directly over `dokploy-network`.
+- Data (MySQL + `pp-media/storage`) lives in named volumes, so it survives
+  redeploys and can be backed up via Dokploy's Volume Backups.
+- Add your domain in Dokploy's **Domains** tab (e.g. `pay.jinnchat.net`) -
+  Dokploy generates the Traefik labels for you; nothing to configure here.
+
+The admin password (auto-generated or from `ADMIN_PASSWORD`) is written to
+`pp-media/storage/ADMIN_CREDENTIALS.txt` inside the `pp_media` volume.
 
 ## Finding your password (no terminal needed)
 
@@ -44,7 +64,6 @@ cp .env.example .env
 
 | Variable            | Default           | Purpose                                   |
 | ------------------- | ----------------- | ----------------------------------------- |
-| `APP_PORT`          | `8080`            | Host port for the web UI                  |
 | `DB_NAME`           | `piprapay`        | MySQL database name                       |
 | `DB_USER`           | `piprapay`        | MySQL application user                    |
 | `DB_PASSWORD`       | `piprapay`        | MySQL application password                |
