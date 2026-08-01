@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
         libcurl4-openssl-dev \
         libmagickwand-dev \
+        libonig-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Core extensions (PDO MySQL, GD, Mbstring, Zip, bcmath, cURL)
