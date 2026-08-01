@@ -522,13 +522,13 @@
         </div>
     </div>
 
-    <script src="<?php echo $site_url ?>assets/js/tabler.min.js"></script>
-    <script src="<?php echo $site_url ?>assets/js/jquery-3.6.4.min.js"></script>
-    <script src="<?php echo $site_url ?>assets/js/custom-toast.js?v=1.2"></script>
-    <script src="<?php echo $site_url ?>assets/js/apexcharts.min.js"></script>
-    <script src="<?php echo $site_url ?>assets/js/choices.min.js"></script>
-    <script src="<?php echo $site_url ?>assets/js/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/tabler.min.js"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/jquery-3.6.4.min.js"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/custom-toast.js?v=1.2"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/apexcharts.min.js"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/choices.min.js"></script>
+    <script data-cfasync="false" src="<?php echo $site_url ?>assets/js/qrcode.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
     
     <input type="hidden" name="csrf_token_default" value="<?= $csrf_token; ?>">
     
