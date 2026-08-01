@@ -20,12 +20,19 @@ That is it. On first boot the container:
 Open http://localhost:8080 and log in:
 
 - Username: `admin`
-- Password: the value of `ADMIN_PASSWORD` in your `.env`; if you left it empty,
-  a random password was generated and printed in the app container logs:
+- Password: see "Finding your password" below.
 
-```bash
-docker compose logs app | grep -i password
-```
+## Finding your password (no terminal needed)
+
+- If you set `ADMIN_PASSWORD` in `.env`, that is the password.
+- If you left it empty, the installer generated a random one. It is written to
+  **`pp-media/storage/ADMIN_CREDENTIALS.txt`** next to your project - open that
+  file with any text editor. It is also printed in the container logs
+  (`docker compose logs app | grep -i password`), or viewable in your Docker
+  GUI (Docker Desktop / Portainer) under the `piprapay` container's Logs tab.
+
+The `pp-media/storage` folder is blocked from direct web access, so the
+credentials file and any backups are never served over HTTP.
 
 ## Configuration
 

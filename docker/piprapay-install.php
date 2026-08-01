@@ -69,6 +69,18 @@ $adminPassword = getenv('ADMIN_PASSWORD') ?: '';
 if ($adminPassword === '') {
     $adminPassword = generateStrongPassword(12);
     echo "[PipraPay] ADMIN_PASSWORD not set - generated password: $adminPassword\n";
+
+    // Persist credentials into the bind-mounted storage so no terminal is needed
+    $credDir = $appRoot . '/pp-media/storage';
+    if (!is_dir($credDir)) mkdir($credDir, 0755, true);
+    file_put_contents(
+        $credDir . '/ADMIN_CREDENTIALS.txt',
+        "PipraPay admin credentials (auto-generated on first install)\n"
+        . "URL:      http://<your-host>/admin\n"
+        . "Username: $adminUsername\n"
+        . "Password: $adminPassword\n"
+        . "Set ADMIN_USERNAME / ADMIN_PASSWORD in .env to use your own, then re-provision.\n"
+    );
 }
 
 $a_id = generateItemID();
