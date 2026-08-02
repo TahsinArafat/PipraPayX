@@ -410,11 +410,11 @@
                                 $metadataRaw   = $data['metadata'] ?? '{}';
 
                                 function getDomainFromUrl($url) {
-                                    // Check if it's a valid URL
+                                    // Normalize like stored domains (strips "www.",
+                                    // lowercases) so https://www.example.com matches
+                                    // the whitelisted "example.com".
                                     if (filter_var($url, FILTER_VALIDATE_URL)) {
-                                        // Parse the URL to get host
-                                        $parsed = parse_url($url, PHP_URL_HOST);
-                                        return $parsed;
+                                        return getDomainValue($url);
                                     }
                                     return false; // Invalid URL
                                 }
