@@ -410,9 +410,8 @@
                                 $metadataRaw   = $data['metadata'] ?? '{}';
 
                                 function getDomainFromUrl($url) {
-                                    // Normalize like stored domains (strips "www.",
-                                    // lowercases) so https://www.example.com matches
-                                    // the whitelisted "example.com".
+                                    // Normalize like stored domains (lowercase, keep
+                                    // "www.") so the lookup can match either variant.
                                     if (filter_var($url, FILTER_VALIDATE_URL)) {
                                         return getDomainValue($url);
                                     }
@@ -434,11 +433,18 @@
                                         ]);
                                         exit;
                                     }else{
-                                        $params = [ ':domain' => $returnDomain ];
+                                        $params = [
+                                            ':domain'      => $returnDomain,
+                                            ':domain_bare' => preg_replace('/^www\./i', '', $returnDomain),
+                                        ];
 
-                                        $response_urlCheck = json_decode(getData($db_prefix.'domain','WHERE domain = :domain', '* FROM', $params),true);
+                                        $response_urlCheck = json_decode(getData($db_prefix.'domain','WHERE domain IN (:domain, :domain_bare)', '* FROM', $params),true);
                                         if($response_urlCheck['status'] == true){
-                                            if($response_urlCheck['response'][0]['status'] !== "active"){
+                                            $isActive = false;
+                                            foreach ($response_urlCheck['response'] as $row) {
+                                                if ($row['status'] === 'active') { $isActive = true; break; }
+                                            }
+                                            if (!$isActive) {
                                                 http_response_code(400);
                                                 echo json_encode([
                                                     'error' => [
@@ -476,11 +482,18 @@
                                         ]);
                                         exit;
                                     }else{
-                                        $params = [ ':domain' => $webhookDomain ];
+                                        $params = [
+                                            ':domain'      => $webhookDomain,
+                                            ':domain_bare' => preg_replace('/^www\./i', '', $webhookDomain),
+                                        ];
 
-                                        $response_urlCheck = json_decode(getData($db_prefix.'domain','WHERE domain = :domain', '* FROM', $params),true);
+                                        $response_urlCheck = json_decode(getData($db_prefix.'domain','WHERE domain IN (:domain, :domain_bare)', '* FROM', $params),true);
                                         if($response_urlCheck['status'] == true){
-                                            if($response_urlCheck['response'][0]['status'] !== "active"){
+                                            $isActive = false;
+                                            foreach ($response_urlCheck['response'] as $row) {
+                                                if ($row['status'] === 'active') { $isActive = true; break; }
+                                            }
+                                            if (!$isActive) {
                                                 http_response_code(400);
                                                 echo json_encode([
                                                     'error' => [
