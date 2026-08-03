@@ -105,7 +105,8 @@
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data_ini));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL check for sandbox
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             
             // Execute cURL request
             $response_curl_before = curl_exec($ch);
@@ -114,9 +115,9 @@
             curl_close($ch);
             
             if($response_curl['status'] == "SUCCESS"){
-                echo '<script>location.href="'.$response_curl['GatewayPageURL'].'"</script>';
+                echo '<script>location.href=' . json_encode($response_curl['GatewayPageURL']) . ';</script>';
             }else{
-                echo '<div class="alert alert-danger" role="alert">'.$response_curl_before.'</div> <style>.loading-123412341234{display: none;}</style>';
+                echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($response_curl_before, ENT_QUOTES, 'UTF-8').'</div> <style>.loading-123412341234{display: none;}</style>';
             }
         }
 

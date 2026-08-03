@@ -2,8 +2,8 @@ RewriteEngine On
 
 Options -Indexes
 
-# Never serve runtime storage (backups, imports, temp, updates) directly over HTTP
-RewriteRule ^pp-media/storage(/|$) - [F,L]
+# Never serve runtime storage subdirectories (backups, imports, temp, updates) directly over HTTP
+RewriteRule ^pp-media/storage/(backup|import|temp|updates)(/|$) - [F,L]
 
 RewriteCond %{THE_REQUEST} \s/+(.+?\.php)[\s?] [NC]
 RewriteCond %1 !^index\.php$

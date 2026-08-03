@@ -29,19 +29,13 @@
             http_response_code(403);
             exit('Invalid slug');
         }else{
-            if(file_exists(__DIR__ . '/../../../pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php')){
-                require_once __DIR__ . '/../../../pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php';
+            $gatewayObj = pp_load_gateway($response_gateway['response'][0]['slug']);
 
+            if ($gatewayObj !== null) {
                 $slug = basename(__DIR__ . '/../../../pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug']);
 
-                // twenty-six → TwentySixTheme
-                $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug))) . 'Gateway';
-
-                if (class_exists($class)) {
-                    $gatewayObj = new $class();
-
-                    $gatewayInfo = $gatewayObj->info();
-                    $gatewayColor = $gatewayObj->color();
+                $gatewayInfo = $gatewayObj->info();
+                $gatewayColor = $gatewayObj->color();
 
                     if (method_exists($gatewayObj, 'supported_languages')) {
                         $supported_languages = $gatewayObj->supported_languages();
@@ -80,10 +74,6 @@
                         $fields = array_merge($extraFields, $fields);
                     }
                 }else{
-                    http_response_code(403);
-                    exit('Invalid slug');
-                }
-            }else{
                 if($response_gateway['response'][0]['tab'] == 'bank'){
                     $fields = [
                         [

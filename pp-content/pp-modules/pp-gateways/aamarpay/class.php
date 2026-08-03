@@ -101,9 +101,9 @@
             $response_curl = json_decode($response_curl_before, true);
 
             if(isset($response_curl['payment_url'])){
-               echo '<script>location.href="' . $response_curl['payment_url'] . '";</script>';
+               echo '<script>location.href=' . json_encode($response_curl['payment_url']) . ';</script>';
             }else{
-                echo '<div class="alert alert-danger" role="alert">'.$response_curl_before.'</div> <style>.loading-123412341234{display: none;}</style>';
+                echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($response_curl_before, ENT_QUOTES, 'UTF-8').'</div> <style>.loading-123412341234{display: none;}</style>';
             }
         }
 

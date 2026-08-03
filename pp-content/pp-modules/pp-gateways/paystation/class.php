@@ -111,9 +111,9 @@
             $response_curl = json_decode($response, true);
 
             if(isset($response_curl['payment_url'])){
-               echo '<script>location.href="' . $response_curl['payment_url'] . '";</script>';
+               echo '<script>location.href=' . json_encode($response_curl['payment_url']) . ';</script>';
             }else{
-                echo '<div class="alert alert-danger" role="alert">'.$response.'</div> <style>.loading-123412341234{display: none;}</style>';
+                echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($response, ENT_QUOTES, 'UTF-8').'</div> <style>.loading-123412341234{display: none;}</style>';
             }
         }
 
@@ -137,7 +137,8 @@
                 curl_setopt($url,CURLOPT_HTTPHEADER, $header);
                 curl_setopt($url,CURLOPT_CUSTOMREQUEST, "POST");
                 curl_setopt($url,CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($url,CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($url,CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($url,CURLOPT_SSL_VERIFYHOST, 2);
                 curl_setopt($url,CURLOPT_POSTFIELDS, $body);
                 curl_setopt($url,CURLOPT_FOLLOWLOCATION, 1);
                 $responseData=curl_exec($url);
@@ -171,10 +172,10 @@
 
                         echo "<script>location.reload();</script>";
                     }else{
-                        echo '<div class="alert alert-danger" role="alert">'.$responseData.'</div>';
+                        echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($responseData, ENT_QUOTES, 'UTF-8').'</div>';
                     }
                 }else{
-                    echo '<div class="alert alert-danger" role="alert">'.$responseData.'</div>';
+                    echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($responseData, ENT_QUOTES, 'UTF-8').'</div>';
                 }
             }
         }

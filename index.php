@@ -9,14 +9,10 @@
     }
 
     if(file_exists(__DIR__ . '/pp-content/pp-include/pp-functions.php')){
-        if (isset($pp_functions_loaded)) {
-
-        }else{
+        if (!isset($pp_functions_loaded)) {
             require __DIR__ . '/pp-content/pp-include/pp-functions.php';
 
-            if (isset($pp_functions_loaded)) {
-
-            }else{
+            if (!isset($pp_functions_loaded)) {
                 if(file_exists(__DIR__ . '/pp-404.php')){
                     http_response_code(404);
                     require __DIR__ . '/pp-404.php';
@@ -39,14 +35,10 @@
     }
 
     if(file_exists(__DIR__ . '/pp-content/pp-include/pp-adapter.php')){
-        if (isset($pp_adapter_loaded)) {
-
-        }else{
+        if (!isset($pp_adapter_loaded)) {
             require __DIR__ . '/pp-content/pp-include/pp-adapter.php';
 
-            if (isset($pp_adapter_loaded)) {
-
-            }else{
+            if (!isset($pp_adapter_loaded)) {
                 if(file_exists(__DIR__ . '/pp-404.php')){
                     http_response_code(404);
                     require __DIR__ . '/pp-404.php';
@@ -66,7 +58,6 @@
             http_response_code(403);
             exit('Direct access not allowed');
         }
-
     }
 
     /*
@@ -119,7 +110,7 @@
 
     if(!file_exists(__DIR__ . '/.maintenance')){
         if(file_exists(__DIR__ . '/pp-config.php')){
-            if (isset($requriemntnoneedchecked) && $requriemntnoneedchecked === true) {
+            if (isset($requirementsOk) && $requirementsOk === true) {
                 switch ($route) {
                     case '404':
                         if(file_exists(__DIR__ . '/pp-404.php')){
@@ -182,13 +173,9 @@
                                     $options[$field['option_name']] = $value;
                                 }
 
-                                if(file_exists(__DIR__.'/pp-content/pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php')){
-                                    require_once __DIR__.'/pp-content/pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php';
+                                $gateway = pp_load_gateway($response_gateway['response'][0]['slug']);
 
-                                    $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $response_gateway['response'][0]['slug']))) . 'Gateway';
-
-                                    $gateway = new $class();
-
+                                if ($gateway !== null) {
                                     $gateway_info = $gateway->info();
 
                                     if (method_exists($gateway, 'supported_languages')) {
@@ -210,36 +197,7 @@
 
                                     $brandRow = $response_brand['response'][0];
 
-                                    $brandInfo = [
-                                        'id'            => $brandRow['brand_id'],
-                                        'name'          => ($brandRow['name'] == "--") ? $brandRow['identify_name'] : $brandRow['name'],
-                                        'identifyName'  => $brandRow['identify_name'],
-                                        'logo'          => $brandRow['logo'] !== '--' ? $brandRow['logo'] : 'https://help.piprapay.com/storage/branding_media/8a5c6ee4-8eba-401d-bffb-c43006d5f65d.png',
-                                        'favicon'       => $brandRow['favicon'] !== '--' ? $brandRow['favicon'] : 'https://help.piprapay.com/favicon/icon-144x144.png',
-
-                                        'support' => [
-                                            'email'   => $brandRow['support_email_address'],
-                                            'phone'   => $brandRow['support_phone_number'],
-                                            'website' => $brandRow['support_website'],
-                                            'whatsapp'=> $brandRow['whatsapp_number'],
-                                            'telegram'=> 'https://t.me/'.$brandRow['telegram'],
-                                            'messenger'=> 'https://m.me/'.$brandRow['facebook_messenger'],
-                                            'fb_page'=> 'https://facebook.com/'.$brandRow['facebook_page'],
-                                        ],
-
-                                        'address' => [
-                                            'street'  => $brandRow['street_address'],
-                                            'city'    => $brandRow['city_town'],
-                                            'postal'  => $brandRow['postal_code'],
-                                            'country' => $brandRow['country'],
-                                        ],
-
-                                        'locale' => [
-                                            'timezone' => $brandRow['timezone'],
-                                            'language' => $language,
-                                            'currency' => $brandRow['currency_code'],
-                                        ],
-                                    ];
+                                    $brandInfo = buildBrandPayload($brandRow, $language, true);
 
                                     $response = [
                                         'gateway' => [
@@ -266,36 +224,7 @@
                                             'options' => $options
                                         ],
 
-                                        'brand' => [
-                                            'id'            => $brandRow['brand_id'],
-                                            'name'          => $brandRow['name'],
-                                            'identifyName'  => $brandRow['identify_name'],
-                                            'logo'          => $brandRow['logo'] !== '--' ? $brandRow['logo'] : null,
-                                            'favicon'       => $brandRow['favicon'] !== '--' ? $brandRow['favicon'] : null,
-
-                                            'support' => [
-                                                'email'     => $brandRow['support_email_address'],
-                                                'phone'     => $brandRow['support_phone_number'],
-                                                'website'   => $brandRow['support_website'],
-                                                'whatsapp'  => $brandRow['whatsapp_number'],
-                                                'telegram'  => 'https://t.me/'.$brandRow['telegram'],
-                                                'messenger' => 'https://m.me/'.$brandRow['facebook_messenger'],
-                                                'fb_page'   => 'https://facebook.com/'.$brandRow['facebook_page'],
-                                            ],
-
-                                            'address' => [
-                                                'street'  => $brandRow['street_address'],
-                                                'city'    => $brandRow['city_town'],
-                                                'postal'  => $brandRow['postal_code'],
-                                                'country' => $brandRow['country'],
-                                            ],
-
-                                            'locale' => [
-                                                'timezone' => $brandRow['timezone'],
-                                                'language' => $language,
-                                                'currency' => $brandRow['currency_code'],
-                                            ],
-                                        ],
+                                        'brand' => buildBrandPayload($brandRow, $language),
 
                                         'lang' => $lang
                                     ];
@@ -974,7 +903,7 @@
 
                     case $path_payment:
                         $paymentID = $param1;
-                        $paymentID124123412 = $param1;
+                        $paymentId = $param1;
 
                         $params = [ ':ref' => $paymentID ];
 
@@ -1809,48 +1738,14 @@
 
                                                     $net = money_sub(money_add($row['amount'], $row['processing_fee']), $row['discount_amount']);
 
-                                                    $all_transactions[] = [
-                                                        "pp_id" => $row['ref'],
-                                                        "full_name" => $customer_info['name'] ?? 'N/A',
-                                                        "email_address" => $customer_info['email'] ?? 'N/A',
-                                                        "mobile_number" => $customer_info['mobile'] ?? 'N/A',
-                                                        "gateway" => $gateway,
-                                                        "amount" => money_round($row['amount']),
-                                                        "fee" => money_round($row['processing_fee']),
-                                                        "discount_amount" => money_round($row['discount_amount']),
-                                                        "total" => money_round($net),
-                                                        "local_net_amount" => money_round($row['local_net_amount']),
-                                                        "currency" => $row['currency'],
-                                                        "local_currency" => $row['local_currency'],
-                                                        "metadata" => $metadata, // ← AS-IS
-                                                        "sender" => $response_pending_SMSTransaction['response'][0]['number'],
-                                                        "transaction_id" => $row['trx_id'],
-                                                        "status" => $row['status'],
-                                                        "date" => convertUTCtoUserTZ($row['created_date'], ($response_brand['response'][0]['timezone'] === '--' || $response_brand['response'][0]['timezone'] === '') ? 'Asia/Dhaka' : $response_brand['response'][0]['timezone'], "M d, Y h:i A")
-                                                    ];
+                                                    $timezone = $response_brand['response'][0]['timezone'];
+
+                                                    $all_transactions[] = buildTransactionPayload($row, $customer_info, $gateway, $response_pending_SMSTransaction['response'][0]['number'], $net, $metadata, $timezone);
 
                                                     if($row['webhook_url'] == "" || $row['webhook_url'] == "--"){
 
                                                     }else{
-                                                        $ipnData = [
-                                                            "pp_id" => $row['ref'],
-                                                            "full_name" => $customer_info['name'] ?? 'N/A',
-                                                            "email_address" => $customer_info['email'] ?? 'N/A',
-                                                            "mobile_number" => $customer_info['mobile'] ?? 'N/A',
-                                                            "gateway" => $gateway,
-                                                            "amount" => money_round($row['amount']),
-                                                            "fee" => money_round($row['processing_fee']),
-                                                            "discount_amount" => money_round($row['discount_amount']),
-                                                            "total" => money_round($net),
-                                                            "local_net_amount" => money_round($row['local_net_amount']),
-                                                            "currency" => $row['currency'],
-                                                            "local_currency" => $row['local_currency'],
-                                                            "metadata" => $metadata, // ← AS-IS
-                                                            "sender" => $response_pending_SMSTransaction['response'][0]['number'],
-                                                            "transaction_id" => $row['trx_id'],
-                                                            "status" => $row['status'],
-                                                            "date" => convertUTCtoUserTZ($row['created_date'], ($response_brand['response'][0]['timezone'] === '--' || $response_brand['response'][0]['timezone'] === '') ? 'Asia/Dhaka' : $response_brand['response'][0]['timezone'], "M d, Y h:i A")
-                                                        ];
+                                                        $ipnData = buildTransactionPayload($row, $customer_info, $gateway, $response_pending_SMSTransaction['response'][0]['number'], $net, $metadata, $timezone);
 
                                                         $payload = json_encode($ipnData, JSON_UNESCAPED_UNICODE);
 
@@ -1889,7 +1784,8 @@
                                         curl_setopt_array($ch, [
                                             CURLOPT_RETURNTRANSFER => true,
                                             CURLOPT_TIMEOUT => 10,
-                                            CURLOPT_SSL_VERIFYPEER => false
+                                            CURLOPT_SSL_VERIFYPEER => true,
+                                            CURLOPT_SSL_VERIFYHOST => 2
                                         ]);
 
                                         curl_multi_add_handle($multiHandle, $ch);

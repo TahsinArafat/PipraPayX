@@ -91,6 +91,12 @@ function getAuthorizationHeader()
 
 function connectDatabase()
 {
+    static $pdo = null;
+
+    if ($pdo instanceof PDO) {
+        return $pdo;
+    }
+
     global $db_host, $db_user, $db_pass, $db_name;
 
     try {
@@ -106,7 +112,9 @@ function connectDatabase()
 
         return $pdo;
     } catch (PDOException $e) {
-        die('Database connection failed: ' . $e->getMessage());
+        error_log('Database connection failed: ' . $e->getMessage());
+        http_response_code(503);
+        exit('Service temporarily unavailable.');
     }
 }
 
@@ -251,18 +259,26 @@ function logoutCookie()
 
 function escape_string($value)
 {
-    /*$conn = connectDatabase();
-    $value = mysqli_real_escape_string($conn, $value);*/
+    // MySQL-compatible escaping for values interpolated into SQL text
+    // (both '...' and "..." quoting styles). Matches what the old
+    // mysqli_real_escape_string() did, now on PDO.
+    if (!is_string($value)) {
+        return $value;
+    }
 
-    return $value;
+    return str_replace(
+        ["\\", "\0", "\n", "\r", "'", '"', "\x1a"],
+        ["\\\\", "\\0", "\\n", "\\r", "\\'", '\\"', "\\Z"],
+        $value
+    );
 }
 
-function getData($tableName, $coloum_name, $type = "* FROM", $params = [])
+function getData($tableName, $column_name, $type = "* FROM", $params = [])
 {
     $pdo = connectDatabase(); // PDO connection
 
     // Build SQL
-    $sql = "SELECT $type `$tableName` $coloum_name";
+    $sql = "SELECT $type `$tableName` $column_name";
 
     try {
         $stmt = $pdo->prepare($sql); // prepare statement
@@ -302,10 +318,16 @@ function insertData($tableName, $columns, $values)
 {
     $pdo = connectDatabase();
 
+    // Cache the schema per table so repeated inserts don't re-run SHOW COLUMNS
+    static $schemaCache = [];
+
     try {
-        $stmtColumns = $pdo->prepare("SHOW COLUMNS FROM `$tableName`");
-        $stmtColumns->execute();
-        $tableCols = $stmtColumns->fetchAll(PDO::FETCH_ASSOC);
+        if (!isset($schemaCache[$tableName])) {
+            $stmtColumns = $pdo->prepare("SHOW COLUMNS FROM `$tableName`");
+            $stmtColumns->execute();
+            $schemaCache[$tableName] = $stmtColumns->fetchAll(PDO::FETCH_ASSOC);
+        }
+        $tableCols = $schemaCache[$tableName];
 
         $finalColumns = [];
         $finalValues = [];
@@ -396,25 +418,18 @@ function deleteData($tableName, $condition)
 
 function limit_checker($tableName, $db_prefix)
 {
-    $count = 1;
+    $pdo = connectDatabase();
 
-    if ($tableName == "transactions") {
-        $response_limit = json_decode(getData($db_prefix . 'transaction', ' WHERE status = "completed"'), true);
-        if ($response_limit['status'] == true) {
-            foreach ($response_limit['response'] as $row) {
-                $count = $count + 1;
-            }
-        }
-    } else {
-        $response_limit = json_decode(getData($db_prefix . 'domain', ' '), true);
-        if ($response_limit['status'] == true) {
-            foreach ($response_limit['response'] as $row) {
-                $count = $count + 1;
-            }
-        }
+    $table = $tableName == "transactions" ? $db_prefix . 'transaction' : $db_prefix . 'domain';
+    $where = $tableName == "transactions" ? ' WHERE status = "completed"' : '';
+
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM `$table`$where");
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['cnt'] + 1;
+    } catch (PDOException $e) {
+        error_log("limit_checker PDO Error: " . $e->getMessage());
+        return 1;
     }
-
-    return $count;
 }
 
 function generateStrongPassword($length = 8)
@@ -1366,8 +1381,8 @@ function get_env($option_name, $brand_id = 'both')
 {
     global $db_prefix;
 
-    $option_name = escape_string($option_name);
-    $brand_id = escape_string($brand_id);
+    $option_name = (string) $option_name;
+    $brand_id = (string) $brand_id;
 
     $params = [':brand_id' => $brand_id, ':option_name' => $option_name];
 
@@ -1394,9 +1409,9 @@ function set_env($option_name, $value, $brand_id = 'both')
 {
     global $db_prefix;
 
-    $option_name = escape_string($option_name);
-    $value = escape_string($value);
-    $brand_id = escape_string($brand_id);
+    $option_name = (string) $option_name;
+    $value = (string) $value;
+    $brand_id = (string) $brand_id;
 
     $params = [':brand_id' => $brand_id, ':option_name' => $option_name];
 
@@ -1545,7 +1560,9 @@ function deleteFolder($dir)
 function copyFolder($src, $dst)
 {
     $dir = opendir($src);
-    @mkdir($dst, 0755, true);
+    if (!is_dir($dst) && !mkdir($dst, 0755, true) && !is_dir($dst)) {
+        return false;
+    }
 
     while (false !== ($file = readdir($dir))) {
         if (($file != '.') && ($file != '..')) {
@@ -1769,9 +1786,13 @@ function extractUpdate($zipFile, $destination)
         $targetPath = $destination . '/' . $entryNew;
 
         if (substr($entry, -1) === '/') { // folder
-            @mkdir($targetPath, 0755, true);
+            if (!is_dir($targetPath)) {
+                mkdir($targetPath, 0755, true);
+            }
         } else { // file
-            @mkdir(dirname($targetPath), 0755, true);
+            if (!is_dir(dirname($targetPath))) {
+                mkdir(dirname($targetPath), 0755, true);
+            }
             copy("zip://$zipFile#$entry", $targetPath);
         }
     }
@@ -2093,15 +2114,15 @@ function pp_set_transaction_status($transactionid, $status = '', $gateway_id = '
 
 function pp_checkout_address($paymentid = '')
 {
-    global $path_payment, $paymentID124123412;
+    global $path_payment, $paymentId;
 
     if ($paymentid !== "") {
-        $paymentID124123412 = $paymentid ?? '';
+        $paymentId = $paymentid ?? '';
     } else {
-        $paymentID124123412 = $paymentID124123412 ?? '';
+        $paymentId = $paymentId ?? '';
     }
 
-    return pp_site_address() . $path_payment . '/' . $paymentID124123412;
+    return pp_site_address() . $path_payment . '/' . $paymentId;
 }
 
 function pp_hexToRgba($hex, $opacity = 1)
@@ -2146,6 +2167,81 @@ function pp_assets($position = '')
                 <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
             ';
     }
+}
+
+/**
+ * Build the brand payload shared by checkout and IPN responses.
+ * $withFallbacks swaps the '--' logo/favicon sentinel for remote defaults
+ * and prefers identify_name when name is unset.
+ */
+function buildBrandPayload(array $brandRow, string $language, bool $withFallbacks = false): array
+{
+    if ($withFallbacks) {
+        $name = ($brandRow['name'] == "--") ? $brandRow['identify_name'] : $brandRow['name'];
+        $logo = $brandRow['logo'] !== '--' ? $brandRow['logo'] : 'https://help.piprapay.com/storage/branding_media/8a5c6ee4-8eba-401d-bffb-c43006d5f65d.png';
+        $favicon = $brandRow['favicon'] !== '--' ? $brandRow['favicon'] : 'https://help.piprapay.com/favicon/icon-144x144.png';
+    } else {
+        $name = $brandRow['name'];
+        $logo = $brandRow['logo'] !== '--' ? $brandRow['logo'] : null;
+        $favicon = $brandRow['favicon'] !== '--' ? $brandRow['favicon'] : null;
+    }
+
+    return [
+        'id'            => $brandRow['brand_id'],
+        'name'          => $name,
+        'identifyName'  => $brandRow['identify_name'],
+        'logo'          => $logo,
+        'favicon'       => $favicon,
+
+        'support' => [
+            'email'     => $brandRow['support_email_address'],
+            'phone'     => $brandRow['support_phone_number'],
+            'website'   => $brandRow['support_website'],
+            'whatsapp'  => $brandRow['whatsapp_number'],
+            'telegram'  => 'https://t.me/'.$brandRow['telegram'],
+            'messenger' => 'https://m.me/'.$brandRow['facebook_messenger'],
+            'fb_page'   => 'https://facebook.com/'.$brandRow['facebook_page'],
+        ],
+
+        'address' => [
+            'street'  => $brandRow['street_address'],
+            'city'    => $brandRow['city_town'],
+            'postal'  => $brandRow['postal_code'],
+            'country' => $brandRow['country'],
+        ],
+
+        'locale' => [
+            'timezone' => $brandRow['timezone'],
+            'language' => $language,
+            'currency' => $brandRow['currency_code'],
+        ],
+    ];
+}
+
+/**
+ * Build the transaction payload shared by the transaction list and webhook IPN.
+ */
+function buildTransactionPayload(array $row, array $customer_info, string $gateway, string $sender, string $net, array $metadata, string $timezone): array
+{
+    return [
+        "pp_id" => $row['ref'],
+        "full_name" => $customer_info['name'] ?? 'N/A',
+        "email_address" => $customer_info['email'] ?? 'N/A',
+        "mobile_number" => $customer_info['mobile'] ?? 'N/A',
+        "gateway" => $gateway,
+        "amount" => money_round($row['amount']),
+        "fee" => money_round($row['processing_fee']),
+        "discount_amount" => money_round($row['discount_amount']),
+        "total" => money_round($net),
+        "local_net_amount" => money_round($row['local_net_amount']),
+        "currency" => $row['currency'],
+        "local_currency" => $row['local_currency'],
+        "metadata" => $metadata, // ← AS-IS
+        "sender" => $sender,
+        "transaction_id" => $row['trx_id'],
+        "status" => $row['status'],
+        "date" => convertUTCtoUserTZ($row['created_date'], ($timezone === '--' || $timezone === '') ? 'Asia/Dhaka' : $timezone, "M d, Y h:i A")
+    ];
 }
 
 function pp_downloadReceiptPDF($data = [])
@@ -2446,13 +2542,9 @@ function pp_gateway_info($gateway_id = '', $data = [])
         $isBelowMax = $hasNoMax ? true : (bccomp(money_round($convertedAmount), $max, 2) <= 0);
 
         if ($isAboveMin && $isBelowMax) {
-            if (file_exists(__DIR__ . '/../pp-modules/pp-gateways/' . $response_gateway['response'][0]['slug'] . '/class.php')) {
-                require_once __DIR__ . '/../pp-modules/pp-gateways/' . $response_gateway['response'][0]['slug'] . '/class.php';
+            $gateway = pp_load_gateway($response_gateway['response'][0]['slug']);
 
-                $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $response_gateway['response'][0]['slug']))) . 'Gateway';
-
-                $gateway = new $class();
-
+            if ($gateway !== null) {
                 $gateway_info = $gateway->info();
 
                 if (method_exists($gateway, 'supported_languages')) {
@@ -2611,13 +2703,9 @@ function pp_gateway_render($gateway_id = '', $data = [])
         $data['transaction']['local_net_amount'] = money_round($convertedAmount, 2);
         $data['transaction']['local_currency'] = $gatewayCurrency;
 
-        if (file_exists(__DIR__ . '/../pp-modules/pp-gateways/' . $response_gateway['response'][0]['slug'] . '/class.php')) {
-            require_once __DIR__ . '/../pp-modules/pp-gateways/' . $response_gateway['response'][0]['slug'] . '/class.php';
+        $gateway = pp_load_gateway($response_gateway['response'][0]['slug']);
 
-            $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $response_gateway['response'][0]['slug']))) . 'Gateway';
-
-            $gateway = new $class();
-
+        if ($gateway !== null) {
             $gateway_info = $gateway->info();
 
             if (method_exists($gateway, 'supported_languages')) {

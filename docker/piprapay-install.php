@@ -70,8 +70,9 @@ if ($adminPassword === '') {
     $adminPassword = generateStrongPassword(12);
     echo "[PipraPay] ADMIN_PASSWORD not set - generated password: $adminPassword\n";
 
-    // Persist credentials into the bind-mounted storage so no terminal is needed
-    $credDir = $appRoot . '/pp-media/storage';
+    // Persist credentials into the bind-mounted storage so no terminal is needed.
+    // Written under storage/backup/ which the root .htaccess blocks over HTTP.
+    $credDir = $appRoot . '/pp-media/storage/backup';
     if (!is_dir($credDir)) mkdir($credDir, 0755, true);
     file_put_contents(
         $credDir . '/ADMIN_CREDENTIALS.txt',

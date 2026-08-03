@@ -144,7 +144,7 @@
                             echo '<div class="alert alert-danger" role="alert">'.$e->getMessage().'</div><style>.loading-123412341234{display: none;}</style>';
                         }
                     }else{
-                        echo '<div class="alert alert-danger" role="alert">Transaction '.$responseArray['status'].'</div><style>.loading-123412341234{display: none;}</style>';
+                        echo '<div class="alert alert-danger" role="alert">Transaction '.htmlspecialchars($responseArray['status'], ENT_QUOTES, 'UTF-8').'</div><style>.loading-123412341234{display: none;}</style>';
                     }
                 }
             }else{

@@ -78,9 +78,9 @@
                 //echo "Checkout session created!<br>";
                 //echo "Session ID: " . $session['id'];
 
-                echo '<script>location.href="' . $session['url'] . '";</script>';
+                echo '<script>location.href=' . json_encode($session['url']) . ';</script>';
             } else {
-                echo "<center>Error creating session: ".$response."</center> <style>.loading-123412341234{display: none;}</style>";
+                echo "<center>Error creating session: ".htmlspecialchars($response, ENT_QUOTES, 'UTF-8')."</center> <style>.loading-123412341234{display: none;}</style>";
             }
         }
 

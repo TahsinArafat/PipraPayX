@@ -22,7 +22,7 @@ if (isset($_POST['test_databse_request'])) {
         exit;
     }
 
-    if ($requriemntnoneedchecked == false) {
+    if ($requirementsOk == false) {
         echo json_encode([
             'status' => 'false',
             'title' => 'Server Requirements Not Met',
@@ -104,7 +104,7 @@ if (isset($_POST['adminName'])) {
     $adminPassword = $_POST['adminPassword'];
     $confirmPassword = $_POST['confirmPassword'];
 
-    if ($requriemntnoneedchecked == false) {
+    if ($requirementsOk == false) {
         echo json_encode([
             'status' => 'false',
             'title' => 'Server Requirements Not Met',

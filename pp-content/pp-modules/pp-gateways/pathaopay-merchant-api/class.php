@@ -104,9 +104,9 @@
                 $_SESSION['pp_pathaopay_reference_token'] = $headers_array['payment-reference-token'];
                 $_SESSION['pp_pathaopay_invoice_id'] = $result['data']['invoice_id'];
 
-                echo '<script>location.href="' . $result['data']['redirect_url'] . '";</script>';
+                echo '<script>location.href=' . json_encode($result['data']['redirect_url']) . ';</script>';
             } else {
-                echo "<center>".$response_body."</center> <style>.loading-123412341234{display: none;}</style>";
+                echo "<center>".htmlspecialchars($response_body, ENT_QUOTES, 'UTF-8')."</center> <style>.loading-123412341234{display: none;}</style>";
             }
         }
 

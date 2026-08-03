@@ -118,9 +118,9 @@
             if(isset($response_de['data']['payment_url'])){
                 set_env('oxapay-gateway-pp_'.$data['transaction']['ref'], $response_de['data']['track_id']);
 
-                echo '<script>location.href="' . $response_de['data']['payment_url'] . '";</script>';
+                echo '<script>location.href=' . json_encode($response_de['data']['payment_url']) . ';</script>';
             }else{
-                echo '<div class="alert alert-danger" role="alert">'.$response.'</div> <style>.loading-123412341234{display: none;}</style>';
+                echo '<div class="alert alert-danger" role="alert">'.htmlspecialchars($response, ENT_QUOTES, 'UTF-8').'</div> <style>.loading-123412341234{display: none;}</style>';
             }
         }
 

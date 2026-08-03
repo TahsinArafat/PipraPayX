@@ -110,11 +110,11 @@
         ]
     ];
 
-    $requriemntnoneedchecked = true;
+    $requirementsOk = true;
 
     foreach ($requirements as $req) {
         if (!$req['check']) {
-            $requriemntnoneedchecked = false;
+            $requirementsOk = false;
         }
     }
 
@@ -126,14 +126,10 @@
     $path_homepageRedirect = '';
 
     if(file_exists(__DIR__ . '/pp-functions.php')){
-        if (isset($pp_functions_loaded)) {
-
-        }else{
+        if (!isset($pp_functions_loaded)) {
             require __DIR__ . '/pp-functions.php';
 
-            if (isset($pp_functions_loaded)) {
-
-            }else{
+            if (!isset($pp_functions_loaded)) {
                 if(file_exists(__DIR__ . '/../../pp-404.php')){
                     http_response_code(404);
                     require __DIR__ . '/../../pp-404.php';
@@ -158,7 +154,7 @@
     if(file_exists(__DIR__ . '/../../pp-config.php')){
         require __DIR__ . '/../../pp-config.php';
 
-        if($requriemntnoneedchecked == true){
+        if($requirementsOk == true){
             $path_payment = ($value = get_env('geneal-application-settings-paymentPath')) && $value !== '--' ? $value : 'payment';
             $path_invoice = ($value = get_env('geneal-application-settings-invoicePath')) && $value !== '--' ? $value : 'invoice';
             $path_payment_link = ($value = get_env('geneal-application-settings-paymentLinkPath')) && $value !== '--' ? $value : 'payment-link';
@@ -222,6 +218,10 @@
     }
 
     $pp_adapter_loaded = true;
+
+    if(file_exists(__DIR__ . '/pp-gateway-loader.php')){
+        require __DIR__ . '/pp-gateway-loader.php';
+    }
 
     $piprapay_current_version = [
         'version_name' => 'v3.0.0-beta',
@@ -423,7 +423,15 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                 $pp_app_timestamp = escape_string($_POST['pp-app-timestamp'] ?? '');
 
                 $data = $pp_app_id . '|' . $pp_app_timestamp;
-                $expectedSignature = hash_hmac('sha256', $data, '698b7520-c604-8323-a04d-dc519bb3e1d3');
+
+                // Per-install HMAC secret, generated once and persisted in the env store
+                // (previously hardcoded in source, which let anyone forge app tokens).
+                $app_secret = get_env('pp-app-hmac-secret');
+                if ($app_secret === '' || $app_secret === '--') {
+                    $app_secret = bin2hex(random_bytes(32));
+                    set_env('pp-app-hmac-secret', $app_secret);
+                }
+                $expectedSignature = hash_hmac('sha256', $data, $app_secret);
 
                 if (!hash_equals($expectedSignature, $pp_app_token)) {
                     echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request token' , 'csrf_token' => $new_csrf_token]);
@@ -435,7 +443,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
             $new_csrf_token = $_SESSION['csrf_token'];
             
             if(isset($_POST['my-two-step-verify-code'])){
-                $auth_code = escape_string($_POST['my-two-step-verify-code'] ?? '');
+                $auth_code = $_POST['my-two-step-verify-code'] ?? '';
 
                 if($global_user_response['response'][0]['2fa_status'] == "enable"){
                     $ga = new PHPGangsta_GoogleAuthenticator();
@@ -459,8 +467,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
             }
             
             if($action == "login"){
-                $email_username = escape_string($_POST['username'] ?? '');
-                $password = escape_string($_POST['password'] ?? '');
+                $email_username = $_POST['username'] ?? '';
+                $password = $_POST['password'] ?? '';
         
                 if($email_username == "" || $password == ""){
                     echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
@@ -622,7 +630,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
 
             if($action == "forgot-password"){
-                $email_address = escape_string($_POST['email-address'] ?? '');
+                $email_address = $_POST['email-address'] ?? '';
 
                 if($email_address == ""){
                     echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
@@ -672,7 +680,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
             if($action == "set-default-brand"){
                 if($global_user_login == true){
-                    $brand_id = escape_string($_POST['brand_id'] ?? '');
+                    $brand_id = $_POST['brand_id'] ?? '';
 
                     if($brand_id == ""){
                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
@@ -698,10 +706,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if (!empty($pp_demo_mode)) {
                         echo json_encode(['status' => "false", 'title' => 'Demo Restriction', 'message' => 'This feature is disabled in the demo version.', 'csrf_token' => $new_csrf_token]);
                     }else{
-                        $fullname = escape_string($_POST['fullname'] ?? '');
-                        $username = escape_string($_POST['username'] ?? '');
-                        $email_address = escape_string($_POST['email-address'] ?? '');
-                        $password = escape_string($_POST['password'] ?? '');
+                        $fullname = $_POST['fullname'] ?? '';
+                        $username = $_POST['username'] ?? '';
+                        $email_address = $_POST['email-address'] ?? '';
+                        $password = $_POST['password'] ?? '';
 
                         if($fullname == "" || $username == "" || $email_address == ""){
                             echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
@@ -1187,10 +1195,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         exit();
                     }
 
-                    $fullname = escape_string($_POST['full-name'] ?? '');
-                    $username = escape_string($_POST['username'] ?? '');
-                    $email_address = escape_string($_POST['email-address'] ?? '');
-                    $password = escape_string($_POST['password'] ?? '');
+                    $fullname = $_POST['full-name'] ?? '';
+                    $username = $_POST['username'] ?? '';
+                    $email_address = $_POST['email-address'] ?? '';
+                    $password = $_POST['password'] ?? '';
                     $brands = $_POST['brands'] ?? [];
 
                     if($fullname == "" || $username == "" || $email_address == "" || $password == ""){
@@ -1209,13 +1217,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 exit();
                             }
 
-                            $response = json_decode(getData($db_prefix.'admin','WHERE username = "'.$username.'"'),true);
+                                    $response = json_decode(getData($db_prefix.'admin','WHERE username = :username', '* FROM', [':username' => $username]),true);
                             if($response['status'] == true){
                                 echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Username already exits.', 'csrf_token' => $new_csrf_token]);
                                 exit();
                             }
 
-                            $response = json_decode(getData($db_prefix.'admin','WHERE email = "'.$email_address.'"'),true);
+                                    $response = json_decode(getData($db_prefix.'admin','WHERE email = :email', '* FROM', [':email' => $email_address]),true);
                             if($response['status'] == true){
                                 echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Email Address already exits.', 'csrf_token' => $new_csrf_token]);
                                 exit();
@@ -1290,11 +1298,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         exit();
                     }
 
-                    $fullname = escape_string($_POST['full-name'] ?? '');
-                    $username = escape_string($_POST['username'] ?? '');
-                    $email_address = escape_string($_POST['email-address'] ?? '');
-                    $password = escape_string($_POST['password'] ?? '');
-                    $itemID = escape_string($_POST['itemID'] ?? '');
+                    $fullname = $_POST['full-name'] ?? '';
+                    $username = $_POST['username'] ?? '';
+                    $email_address = $_POST['email-address'] ?? '';
+                    $password = $_POST['password'] ?? '';
+                    $itemID = $_POST['itemID'] ?? '';
 
                     $response_staff = json_decode(getData($db_prefix.'admin','WHERE role = "staff" AND a_id = "'.$itemID.'"'),true);
                     if($response_staff['status'] == true){
@@ -1312,7 +1320,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 }
 
                                 if($username !== $response_staff['response'][0]['username']){
-                                    $response = json_decode(getData($db_prefix.'admin','WHERE username = "'.$username.'"'),true);
+                            $response = json_decode(getData($db_prefix.'admin','WHERE username = :username', '* FROM', [':username' => $username]),true);
                                     if($response['status'] == true){
                                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Username already exits.', 'csrf_token' => $new_csrf_token]);
                                         exit();
@@ -1320,7 +1328,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 }
 
                                 if($email_address !== $response_staff['response'][0]['email']){
-                                    $response = json_decode(getData($db_prefix.'admin','WHERE email = "'.$email_address.'"'),true);
+                            $response = json_decode(getData($db_prefix.'admin','WHERE email = :email', '* FROM', [':email' => $email_address]),true);
                                     if($response['status'] == true){
                                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Email Address already exits.', 'csrf_token' => $new_csrf_token]);
                                         exit();
@@ -3126,7 +3134,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         }
 
                         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                            $response = json_decode(getData($db_prefix.'customer','WHERE brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND email ="'.$email.'"'),true);
+                            $response = json_decode(getData($db_prefix.'customer','WHERE brand_id = :brand_id AND email = :email', '* FROM', [':brand_id' => $global_response_brand['response'][0]['brand_id'], ':email' => $email]),true);
                             if($response['status'] == false){
                                 $ref = generateItemID();
 
@@ -4486,7 +4494,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     curl_setopt_array($ch, [
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_TIMEOUT => 10,
-                        CURLOPT_SSL_VERIFYPEER => false, // Only if SSL issues, not recommended for production
+                        CURLOPT_SSL_VERIFYPEER => true,
+                        CURLOPT_SSL_VERIFYHOST => 2,
                     ]);
 
                     // Execute cURL
@@ -4543,7 +4552,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         curl_setopt_array($ch, [
                             CURLOPT_RETURNTRANSFER => true,
                             CURLOPT_TIMEOUT => 10,
-                            CURLOPT_SSL_VERIFYPEER => false,
+                            CURLOPT_SSL_VERIFYPEER => true,
+                            CURLOPT_SSL_VERIFYHOST => 2,
                         ]);
 
                         $response = curl_exec($ch);
@@ -4606,7 +4616,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     curl_setopt_array($ch, [
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_TIMEOUT => 10,
-                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYPEER => true,
+                        CURLOPT_SSL_VERIFYHOST => 2,
                     ]);
 
                     $response = curl_exec($ch);
@@ -7360,8 +7371,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 exit();
                             }
 
-                            @mkdir($backupDir, 0755, true);
-                            @mkdir($tempDir, 0755, true);
+                            if (!is_dir($backupDir)) {
+                                mkdir($backupDir, 0755, true);
+                            }
+                            if (!is_dir($tempDir)) {
+                                mkdir($tempDir, 0755, true);
+                            }
 
                             zipFolder($root, "$backupDir/".$piprapay_current_version['version_code'].".zip");
 
@@ -7714,23 +7729,15 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if($gateway == ""){
                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
                     }else{
-                        if (!file_exists(__DIR__ . '/../pp-modules/pp-gateways/'.$gateway.'/class.php')) {
+                        $gatewayObj = pp_load_gateway($gateway);
+
+                        if ($gatewayObj === null) {
                             echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
                         }else{
-                            require_once __DIR__ . '/../pp-modules/pp-gateways/'.$gateway.'/class.php';
-
                             $slug = basename(__DIR__ . '/../pp-modules/pp-gateways/'.$gateway);
 
-                            // twenty-six → TwentySixTheme
-                            $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $slug))) . 'Gateway';
-
-                            if (!class_exists($class)) {
-                                echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
-                            }else{
-                                $gatewayObj = new $class();
-
-                                $gatewayInfo = $gatewayObj->info();
-                                $gatewayColor = $gatewayObj->color();
+                            $gatewayInfo = $gatewayObj->info();
+                            $gatewayColor = $gatewayObj->color();
 
                                 $gateway_id = generateItemID();
 
@@ -7743,7 +7750,6 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             
                             }
                         }
-                    }
                 }else{
                     echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
                 }
@@ -9023,13 +9029,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                         $totalProcessingFee = money_mul($totalProcessingFee, $rate);
                                     }
 
-                                    if(file_exists(__DIR__.'/../pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php')){
-                                        require_once __DIR__.'/../pp-modules/pp-gateways/'.$response_gateway['response'][0]['slug'].'/class.php';
+                                    $gateway = pp_load_gateway($response_gateway['response'][0]['slug']);
 
-                                        $class = str_replace(' ', '', ucwords(str_replace('-', ' ', $response_gateway['response'][0]['slug']))) . 'Gateway';
-
-                                        $gateway = new $class();
-
+                                    if ($gateway !== null) {
                                         $gateway_info = $gateway->info();
                                         $supported_languages = $gateway->supported_languages();
                                         $lang_text = $gateway->lang_text();
