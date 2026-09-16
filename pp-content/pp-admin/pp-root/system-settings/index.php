@@ -30,7 +30,7 @@
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-4 <?= hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', 'manage_general', $global_user_response['response'][0]['role']) ? '' : 'd-none' ?>" onclick="load_content('System Settings','<?php echo $site_url.$path_admin ?>/system-settings/geneal','nav-item-system-settings')"  style="cursor: pointer;">
+                    <div class="col-md-4 <?= hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', 'manage_general', $global_user_response['response'][0]['role']) ? '' : 'd-none' ?>" onclick="load_content('General Settings','<?php echo $site_url.$path_admin ?>/system-settings/general','nav-item-system-settings')"  style="cursor: pointer;">
                         <div class="card h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
@@ -42,7 +42,7 @@
                                     <!-- Text -->
                                     <div class="ms-3">
                                         <h5 class="card-title m-0 mb-1 fw-medium text-primary" style=" margin-top: -3px !important; ">
-                                            Geneal Setting
+                                            General Settings
                                         </h5>
                                         <p class="m-0 text-dark">Manage essential system preferences and core configurations.</p>
                                     </div>
@@ -129,6 +129,27 @@
                                             Backup &amp; Restore
                                         </h5>
                                         <p class="m-0 text-dark">Create, download, and restore database backups</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 <?= hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', 'manage_notification', $global_user_response['response'][0]['role']) ? '' : 'd-none' ?>" onclick="load_content('Notification Settings','<?php echo $site_url.$path_admin ?>/system-settings/notification','nav-item-system-settings')"  style="cursor: pointer;">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <!-- Icon -->
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:50px;height:50px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-bell"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
+                                    </div>
+
+                                    <!-- Text -->
+                                    <div class="ms-3">
+                                        <h5 class="card-title m-0 mb-1 fw-medium text-primary" style=" margin-top: -3px !important; ">
+                                            Notification Settings
+                                        </h5>
+                                        <p class="m-0 text-dark">Configure Telegram, Discord, WhatsApp, Email, &amp; SMS alert triggers.</p>
                                     </div>
                                 </div>
                             </div>

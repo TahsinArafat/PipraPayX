@@ -1317,7 +1317,8 @@ function permissionSchema()
                 'manage_cron' => true,
                 'manage_update' => true,
                 'manage_import' => true,
-                'manage_backup' => true
+                'manage_backup' => true,
+                'manage_notification' => true
             ],
         ],
         'pages' => [
@@ -3033,14 +3034,14 @@ function pp_gateway_render($gateway_id = '', $data = [])
                             <div class="form-group  mt-3" style="display: none">
                                 <label class="form-label">' . $data['lang']['mobile_number'] . '</label>
                                 <div class="form-control-wrap">
-                                    <input type="text" class="form-control" name="mobile_number" placeholder="' . $data['lang']['mobile_number'] . '"> 
+                                    <input type="text" class="form-control" name="mobile_number" placeholder="' . $data['lang']['mobile_number'] . '">
                                 </div>
                             </div>
 
                             <div class="form-group  mt-3">
                                 <label class="form-label">' . $data['lang']['transaction_id'] . '</label>
                                 <div class="form-control-wrap">
-                                    <input type="text" class="form-control" name="trxid" placeholder="' . $data['lang']['enter_transaction_id'] . '" required=""> 
+                                    <input type="text" class="form-control" name="trxid" placeholder="' . $data['lang']['enter_transaction_id'] . '" required="">
                                 </div>
                             </div>
 
@@ -3106,7 +3107,7 @@ function pp_gateway_render($gateway_id = '', $data = [])
                                 <div class="form-group  mt-3">
                                     <label class="form-label">' . $data['lang']['transaction_id'] . '</label>
                                     <div class="form-control-wrap">
-                                        <input type="text" class="form-control" name="trxid" placeholder="' . $data['lang']['enter_transaction_id'] . '" required=""> 
+                                        <input type="text" class="form-control" name="trxid" placeholder="' . $data['lang']['enter_transaction_id'] . '" required="">
                                     </div>
                                 </div>
 
@@ -3166,7 +3167,7 @@ function pp_gateway_render($gateway_id = '', $data = [])
                                     <div class="form-group  mt-3">
                                         <label class="form-label">' . $data['lang']['upload_slip'] . '</label>
                                         <div class="form-control-wrap">
-                                            <input type="file" class="form-control" name="slip" accept = "image/*" placeholder="' . $data['lang']['upload_slip'] . '" required=""> 
+                                            <input type="file" class="form-control" name="slip" accept = "image/*" placeholder="' . $data['lang']['upload_slip'] . '" required="">
                                         </div>
                                     </div>
 
@@ -3311,7 +3312,7 @@ function pp_renderFormFields(string $type = '', array $data = [])
                             $optId = $name . '_' . preg_replace('/\s+/', '_', strtolower($opt));
 
                             echo "<div class='form-check'>";
-                            echo "<input 
+                            echo "<input
                                         type='checkbox'
                                         name='{$name}[]'
                                         id='{$optId}'
@@ -3463,6 +3464,329 @@ add_action('invoice.updated', function ($invoice) {
     error_log('Wallet credited for invoice '.$invoice['id']);
 });
 */
+
+/*
+ * Notification & Instant Alert Channels (ported from samsusiyam/PipraPay)
+ * These back the System Settings -> Notification page and the
+ * system-settings-notification-* adapter actions. Credentials default to
+ * the get_env() option store, but can be overridden per-call.
+ */
+
+    function pp_send_telegram($text, $chatId = null, $botToken = null, $topicId = null) {
+        $token = !empty($botToken) ? $botToken : get_env('notification_telegram_token');
+        $chat = !empty($chatId) ? $chatId : get_env('notification_telegram_chat_id');
+        $topic = !empty($topicId) ? $topicId : get_env('notification_telegram_topic_id');
+
+        if (empty($token) || $token === '--' || empty($chat) || $chat === '--') {
+            return ['status' => false, 'message' => 'Telegram bot token or chat ID is not configured.'];
+        }
+
+        $url = "https://api.telegram.org/bot" . trim($token) . "/sendMessage";
+        $payload = [
+            'chat_id' => trim($chat),
+            'text' => $text,
+            'parse_mode' => 'HTML',
+            'disable_web_page_preview' => false
+        ];
+
+        if (!empty($topic) && $topic !== '--') {
+            $payload['message_thread_id'] = trim($topic);
+        }
+
+        if (!function_exists('curl_init')) {
+            return ['status' => false, 'message' => 'PHP cURL extension is required for Telegram notifications.'];
+        }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'PipraPay-Notification/3.0'
+        ]);
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        $json = json_decode($res, true);
+        if ($httpCode === 200 && isset($json['ok']) && $json['ok'] == true) {
+            return ['status' => true, 'message' => 'Telegram message sent successfully.'];
+        }
+        return ['status' => false, 'message' => $json['description'] ?? ($err ?: "Telegram API returned HTTP $httpCode: $res")];
+    }
+
+    function pp_send_discord($title, $description, $fields = [], $color = 3066993, $webhookUrl = null) {
+        $url = !empty($webhookUrl) ? $webhookUrl : get_env('notification_discord_webhook');
+        if (empty($url) || $url === '--') {
+            return ['status' => false, 'message' => 'Discord webhook URL is not configured.'];
+        }
+
+        $botName = get_env('notification_discord_bot_name') ?: 'PipraPay Alerts';
+        if ($botName === '--') $botName = 'PipraPay Alerts';
+
+        $embed = [
+            'title' => $title,
+            'description' => $description,
+            'color' => $color,
+            'fields' => $fields,
+            'timestamp' => date('c'),
+            'footer' => [
+                'text' => 'PipraPay Notification Engine'
+            ]
+        ];
+
+        $payload = [
+            'username' => $botName,
+            'embeds' => [$embed]
+        ];
+
+        if (!function_exists('curl_init')) {
+            return ['status' => false, 'message' => 'PHP cURL extension is required for Discord webhook.'];
+        }
+
+        $ch = curl_init(trim($url));
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'PipraPay-Notification/3.0'
+        ]);
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return ['status' => true, 'message' => 'Discord notification sent successfully.'];
+        }
+        $json = json_decode($res, true);
+        return ['status' => false, 'message' => $json['message'] ?? ($err ?: "Discord returned HTTP $httpCode: $res")];
+    }
+
+    function pp_send_whatsapp($phone, $message, $config = []) {
+        $apiUrl = !empty($config['api_url']) ? $config['api_url'] : get_env('notification_whatsapp_api_url');
+        $apiKey = !empty($config['api_key']) ? $config['api_key'] : get_env('notification_whatsapp_api_key');
+        $sender = !empty($config['sender_id']) ? $config['sender_id'] : get_env('notification_whatsapp_sender');
+
+        if (empty($apiUrl) || $apiUrl === '--') {
+            return ['status' => false, 'message' => 'WhatsApp API URL is not configured.'];
+        }
+
+        if (empty($phone) || $phone === '--') {
+            return ['status' => false, 'message' => 'WhatsApp target recipient phone number is missing.'];
+        }
+
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        $url = str_replace(
+            ['{phone}', '{to}', '{number}', '{message}', '{api_key}'],
+            [urlencode($cleanPhone), urlencode($cleanPhone), urlencode($cleanPhone), urlencode($message), urlencode($apiKey)],
+            $apiUrl
+        );
+
+        if (!function_exists('curl_init')) {
+            return ['status' => false, 'message' => 'PHP cURL extension is required for WhatsApp API.'];
+        }
+
+        $ch = curl_init();
+        if (strpos($apiUrl, '{phone}') !== false || strpos($apiUrl, '{to}') !== false || strpos($apiUrl, '{message}') !== false) {
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        } else {
+            curl_setopt($ch, CURLOPT_URL, $apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            $postData = [
+                'to' => $cleanPhone,
+                'phone' => $cleanPhone,
+                'number' => $cleanPhone,
+                'message' => $message,
+                'text' => $message,
+                'api_key' => $apiKey,
+                'token' => $apiKey,
+                'sender' => $sender
+            ];
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        }
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'PipraPay-Notification/3.0');
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return ['status' => true, 'message' => 'WhatsApp message sent successfully.'];
+        }
+        return ['status' => false, 'message' => $err ?: "WhatsApp API returned HTTP $httpCode: $res"];
+    }
+
+    function pp_send_email($to, $subject, $htmlBody, $config = []) {
+        $fromName = !empty($config['from_name']) ? $config['from_name'] : (get_env('notification_email_from_name') ?: 'PipraPay');
+        $fromEmail = !empty($config['from_email']) ? $config['from_email'] : (get_env('notification_email_from') ?: 'noreply@' . ($_SERVER['HTTP_HOST'] ?? 'piprapay.com'));
+        if ($fromName === '--') $fromName = 'PipraPay';
+        if ($fromEmail === '--') $fromEmail = 'noreply@' . ($_SERVER['HTTP_HOST'] ?? 'piprapay.com');
+
+        $smtpHost = !empty($config['smtp_host']) ? $config['smtp_host'] : get_env('notification_email_smtp_host');
+        $smtpPort = !empty($config['smtp_port']) ? $config['smtp_port'] : get_env('notification_email_smtp_port');
+        $smtpUser = !empty($config['smtp_user']) ? $config['smtp_user'] : get_env('notification_email_smtp_user');
+        $smtpPass = !empty($config['smtp_pass']) ? $config['smtp_pass'] : get_env('notification_email_smtp_pass');
+        $smtpEnc  = !empty($config['smtp_enc']) ? $config['smtp_enc'] : get_env('notification_email_smtp_enc'); // ssl or tls
+
+        // If SMTP credentials provided, try direct SMTP connection
+        if (!empty($smtpHost) && $smtpHost !== '--') {
+            try {
+                $port = (!empty($smtpPort) && $smtpPort !== '--') ? (int)$smtpPort : 587;
+                $scheme = ($smtpEnc === 'ssl' || $port === 465) ? 'ssl://' : '';
+                $socket = @fsockopen($scheme . $smtpHost, $port, $errno, $errstr, 8);
+                if (!$socket) {
+                    return ['status' => false, 'message' => "Cannot connect to SMTP server ({$smtpHost}:{$port}). Error: {$errstr} ({$errno})"];
+                }
+
+                $read = function($sock) {
+                    $s = '';
+                    while ($line = fgets($sock, 515)) {
+                        $s .= $line;
+                        if (substr($line, 3, 1) === ' ') break;
+                    }
+                    return $s;
+                };
+                $write = function($sock, $cmd) {
+                    fputs($sock, $cmd . "\r\n");
+                };
+
+                $read($socket);
+                $write($socket, "EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                $read($socket);
+
+                if ($smtpEnc === 'tls' || $port === 587) {
+                    $write($socket, "STARTTLS");
+                    $tlsRes = $read($socket);
+                    if (strpos($tlsRes, '220') !== false) {
+                        stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+                        $write($socket, "EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                        $read($socket);
+                    }
+                }
+
+                if (!empty($smtpUser) && $smtpUser !== '--') {
+                    $write($socket, "AUTH LOGIN");
+                    $read($socket);
+                    $write($socket, base64_encode($smtpUser));
+                    $read($socket);
+                    $write($socket, base64_encode($smtpPass));
+                    $authRes = $read($socket);
+
+                    if (strpos($authRes, '235') === false) {
+                        fclose($socket);
+                        return ['status' => false, 'message' => "SMTP Authentication failed: " . trim($authRes)];
+                    }
+                }
+
+                $write($socket, "MAIL FROM: <$fromEmail>");
+                $fromRes = $read($socket);
+                $write($socket, "RCPT TO: <$to>");
+                $rcptRes = $read($socket);
+                $write($socket, "DATA");
+                $dataPrompt = $read($socket);
+
+                $headers = "MIME-Version: 1.0\r\n";
+                $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+                $headers .= "From: $fromName <$fromEmail>\r\n";
+                $headers .= "To: <$to>\r\n";
+                $headers .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
+                $headers .= "Date: " . date('r') . "\r\n";
+
+                $write($socket, $headers . "\r\n" . $htmlBody . "\r\n.");
+                $dataRes = $read($socket);
+                $write($socket, "QUIT");
+                fclose($socket);
+
+                if (strpos($dataRes, '250') !== false) {
+                    return ['status' => true, 'message' => 'Email sent successfully via SMTP.'];
+                }
+                return ['status' => false, 'message' => "SMTP Error delivering message: " . trim($dataRes)];
+            } catch (Throwable $e) {
+                return ['status' => false, 'message' => "SMTP Exception: " . $e->getMessage()];
+            }
+        }
+
+        // Fallback to PHP native mail() only if explicitly desired
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: $fromName <$fromEmail>\r\n";
+        $headers .= "Reply-To: $fromEmail\r\n";
+        $headers .= "X-Mailer: PHP/" . phpversion();
+
+        $sent = @mail($to, $subject, $htmlBody, $headers);
+        if ($sent) {
+            return ['status' => true, 'message' => 'Email sent successfully via server mail().'];
+        }
+        return ['status' => false, 'message' => 'No SMTP configured and PHP mail() is unavailable. Please configure SMTP host & credentials.'];
+    }
+
+    function pp_send_sms($to, $message, $config = []) {
+        $gatewayUrl = !empty($config['api_url']) ? $config['api_url'] : get_env('notification_sms_api_url');
+        $apiKey     = !empty($config['api_key']) ? $config['api_key'] : get_env('notification_sms_api_key');
+        $senderId   = !empty($config['sender_id']) ? $config['sender_id'] : get_env('notification_sms_sender_id');
+
+        if (empty($gatewayUrl) || $gatewayUrl === '--') {
+            return ['status' => false, 'message' => 'SMS Gateway API URL is not configured.'];
+        }
+
+        if (empty($to) || $to === '--') {
+            return ['status' => false, 'message' => 'Target phone number is missing.'];
+        }
+
+        $cleanPhone = preg_replace('/[^0-9]/', '', $to);
+        $url = str_replace(
+            ['{to}', '{phone}', '{number}', '{message}', '{api_key}', '{sender_id}'],
+            [urlencode($cleanPhone), urlencode($cleanPhone), urlencode($cleanPhone), urlencode($message), urlencode($apiKey), urlencode($senderId)],
+            $gatewayUrl
+        );
+
+        if (!function_exists('curl_init')) {
+            return ['status' => false, 'message' => 'PHP cURL extension is required for SMS Gateway.'];
+        }
+
+        $ch = curl_init();
+        if (strpos($gatewayUrl, '{to}') !== false || strpos($gatewayUrl, '{phone}') !== false || strpos($gatewayUrl, '{message}') !== false) {
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        } else {
+            curl_setopt($ch, CURLOPT_URL, $gatewayUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            $postData = [
+                'api_key'   => $apiKey,
+                'to'        => $cleanPhone,
+                'number'    => $cleanPhone,
+                'message'   => $message,
+                'sender_id' => $senderId
+            ];
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+        }
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'PipraPay-Notification/3.0');
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return ['status' => true, 'message' => 'SMS dispatched successfully.'];
+        }
+        return ['status' => false, 'message' => $err ?: "SMS API returned HTTP $httpCode: $res"];
+    }
 
 class DB
 {

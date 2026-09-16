@@ -284,7 +284,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $global_response_permission = json_decode(getData($db_prefix.'permission','WHERE a_id = :a_id AND status = :status AND brand_id = :brand_id', '* FROM', $params),true);
                             if($global_response_permission['status'] == true){
                                 $params = [ ':brand_id' => $global_response_permission['response'][0]['brand_id'] ];
-                                
+
                                 $global_response_brand = json_decode(getData($db_prefix.'brands','WHERE brand_id = :brand_id', '* FROM', $params),true);
                                 if($global_response_brand['status'] == true){
                                     $global_user_login = true;
@@ -441,7 +441,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
             //$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             $new_csrf_token = $_SESSION['csrf_token'];
-            
+
             if(isset($_POST['my-two-step-verify-code'])){
                 $auth_code = $_POST['my-two-step-verify-code'] ?? '';
 
@@ -465,11 +465,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     }
                 }
             }
-            
+
             if($action == "login"){
                 $email_username = $_POST['username'] ?? '';
                 $password = $_POST['password'] ?? '';
-        
+
                 if($email_username == "" || $password == ""){
                     echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
                 }else{
@@ -482,13 +482,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                         $sql_email_username = 'username = :username';
                     }
-                    
+
                     $response = json_decode(getData($db_prefix.'admin','WHERE '.$sql_email_username, '* FROM', $params),true);
-        
+
                     if($response['status'] == true){
                         if (password_verify($password, $response['response'][0]['password'])) {
                             if ($response['response'][0]['status'] == "active") {
-                                $cookie = bin2hex(random_bytes(16)); 
+                                $cookie = bin2hex(random_bytes(16));
                                 $userInfo = getUserDeviceInfo();
 
                                 $params = [ ':a_id' => $response['response'][0]['a_id'], ':status' => 'active' ];
@@ -517,16 +517,16 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     $columns = ['2fa_secret'];
                                     $values = [$secret];
-                                    $condition = "id = '".$response['response'][0]['id']."'"; 
-                                    
+                                    $condition = "id = '".$response['response'][0]['id']."'";
+
                                     updateData($db_prefix.'admin', $columns, $values, $condition);
                                 }
-                                
+
                                 $columns = ['a_id', 'cookie', 'browser', 'device', 'ip', 'created_date', 'updated_date'];
                                 $values = [$response['response'][0]['a_id'], $cookie, $userInfo['browser'], $userInfo['device'], $userInfo['ip_address'], getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
-                
+
                                 insertData($db_prefix.'browser_log', $columns, $values);
-                                
+
                                 echo json_encode(['status' => "true", 'target' => $target, 'session_token' => $cookie, 'csrf_token' => $new_csrf_token]);
                             }else{
                                 echo json_encode(['status' => "false", 'title' => 'Login Failed', 'message' => 'Your account has been suspended. Please contact with your admin.', 'csrf_token' => $new_csrf_token]);
@@ -534,7 +534,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         }else{
                             if (password_verify($password, $response['response'][0]['temp_password'])) {
                                 if ($response['response'][0]['status'] == "active") {
-                                    $cookie = bin2hex(random_bytes(16)); 
+                                    $cookie = bin2hex(random_bytes(16));
                                     $userInfo = getUserDeviceInfo();
 
                                     $params = [ ':a_id' => $response['response'][0]['a_id'], ':status' => 'active' ];
@@ -563,16 +563,16 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                         $columns = ['2fa_secret'];
                                         $values = [$secret];
-                                        $condition = "id = '".$response['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response['response'][0]['id']."'";
+
                                         updateData($db_prefix.'admin', $columns, $values, $condition);
                                     }
-                                    
+
                                     $columns = ['a_id', 'cookie', 'browser', 'device', 'ip', 'created_date', 'updated_date'];
                                     $values = [$response['response'][0]['a_id'], $cookie, $userInfo['browser'], $userInfo['device'], $userInfo['ip_address'], getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
-                    
+
                                     insertData($db_prefix.'browser_log', $columns, $values);
-                                    
+
                                     echo json_encode(['status' => "true", 'target' => $target, 'session_token' => $cookie, 'csrf_token' => $new_csrf_token]);
                                 }else{
                                     echo json_encode(['status' => "false", 'title' => 'Login Failed', 'message' => 'Your account has been suspended. Please contact with your admin.', 'csrf_token' => $new_csrf_token]);
@@ -603,7 +603,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $params = [ ':a_id' => $global_user_response['response'][0]['a_id'] ];
 
                         $response = json_decode(getData($db_prefix.'admin','WHERE a_id = :a_id', '* FROM', $params),true);
-            
+
                         if($response['status'] == true){
                             $ga = new PHPGangsta_GoogleAuthenticator();
 
@@ -639,9 +639,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $params = [ ':email' => $email_address, ':status' => 'active' ];
 
                         $response = json_decode(getData($db_prefix.'admin','WHERE email = :email AND status = :status', '* FROM', $params),true);
-                
+
                         if($response['status'] == true){
-                            
+
                             if($response['response'][0]['reset_limit'] > 0){
 
                                 $new_temp_password = generateStrongPassword(8);
@@ -650,10 +650,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['temp_password', 'reset_limit'];
                                 $values = [$temp_password, $reset_limit];
-                                $condition = "id = '".$response['response'][0]['id']."'"; 
-                                
+                                $condition = "id = '".$response['response'][0]['id']."'";
+
                                 updateData($db_prefix.'admin', $columns, $values, $condition);
-                                
+
                                 $action_data = [
                                     'full_name'    => $response['response'][0]['full_name'],
                                     'new_password' => $new_temp_password,
@@ -661,7 +661,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 ];
 
                                 do_action('forgot.password', $action_data);
-                        
+
                                 echo json_encode(['status' => "true", 'title' => 'We have emailed your new password.', 'message' => "If your account doesn't exist, you will not receive the email.", 'csrf_token' => $new_csrf_token]);
 
                             }else{
@@ -755,8 +755,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['full_name', 'username', 'email', 'password', 'temp_password', 'updated_date'];
                                 $values = [$fullname, $username, $email_address, $password, $temp_password, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "id = '".$global_user_response['response'][0]['id']."'"; 
-                                
+                                $condition = "id = '".$global_user_response['response'][0]['id']."'";
+
                                 updateData($db_prefix.'admin', $columns, $values, $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Profile Updated', 'message' => 'Your profile information has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -782,8 +782,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                         $columns = ['status', 'updated_date'];
                         $values = ['expired', getCurrentDatetime('Y-m-d H:i:s')];
-                        $condition = "a_id = '".$global_user_response['response'][0]['a_id']."' AND cookie NOT IN ('".$pp_admin."')"; 
-                        
+                        $condition = "a_id = '".$global_user_response['response'][0]['a_id']."' AND cookie NOT IN ('".$pp_admin."')";
+
                         updateData($db_prefix.'browser_log', $columns, $values, $condition);
 
                         echo json_encode(['status' => 'true', 'title' => 'Logged Out Successfully', 'message' => 'You have been logged out of all other browser sessions.', 'csrf_token' => $new_csrf_token]);
@@ -816,8 +816,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['2fa_status', 'updated_date'];
                                 $values = [$fa_status, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "a_id = '".$global_user_response['response'][0]['a_id']."'"; 
-                                
+                                $condition = "a_id = '".$global_user_response['response'][0]['a_id']."'";
+
                                 updateData($db_prefix.'admin', $columns, $values, $condition);
 
                                 if($fa_status == "disable"){
@@ -1089,17 +1089,17 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 }else{
                                     if($actionID == "deleted"){
                                         if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'delete', $global_user_response['response'][0]['role'])) {
-                        
-                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                                            
+
+                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                                             deleteData($db_prefix.'permission', $condition);
 
-                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                                            
+                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                                             deleteData($db_prefix.'browser_log', $condition);
 
-                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                                            
+                                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                                             deleteData($db_prefix.'admin', $condition);
 
                                         }
@@ -1107,11 +1107,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     if($actionID == "activated"){
                                         if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'edit', $global_user_response['response'][0]['role'])) {
-                                                
+
                                             $columns = ['status', 'updated_date'];
                                             $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                            $condition = "a_id = '".$itemID."'"; 
-                                            
+                                            $condition = "a_id = '".$itemID."'";
+
                                             updateData($db_prefix.'admin', $columns, $values, $condition);
 
                                         }
@@ -1119,11 +1119,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     if($actionID == "suspended"){
                                         if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'edit', $global_user_response['response'][0]['role'])) {
-                                                
+
                                             $columns = ['status', 'updated_date'];
                                             $values = ['suspend', getCurrentDatetime('Y-m-d H:i:s')];
-                                            $condition = "a_id = '".$itemID."'"; 
-                                            
+                                            $condition = "a_id = '".$itemID."'";
+
                                             updateData($db_prefix.'admin', $columns, $values, $condition);
 
                                         }
@@ -1160,16 +1160,16 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         if($ItemID == $global_user_response['response'][0]['a_id']){
                             echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'You cannot delete your own account.' , 'csrf_token' => $new_csrf_token]);
                         }else{
-                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                            
+                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                             deleteData($db_prefix.'permission', $condition);
 
-                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                            
+                            $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                             deleteData($db_prefix.'browser_log', $condition);
 
-                            $condition = "id = '".$response_staff['response'][0]['id']."'"; 
-                            
+                            $condition = "id = '".$response_staff['response'][0]['id']."'";
+
                             deleteData($db_prefix.'admin', $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Staff Deleted', 'message' => 'The staff member have been deleted successfully.', 'csrf_token' => $new_csrf_token]);
@@ -1346,8 +1346,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['full_name', 'username', 'email', 'password', 'temp_password', 'updated_date'];
                                 $values = [$fullname, $username, $email_address, $password, $temp_password, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "a_id = '".$response_staff['response'][0]['a_id']."'"; 
-                                
+                                $condition = "a_id = '".$response_staff['response'][0]['a_id']."'";
+
                                 updateData($db_prefix.'admin', $columns, $values, $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Staff Profile Updated', 'message' => 'Staff profile information has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -1513,8 +1513,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     }else{
                                         if($actionID == "deleted"){
                                             if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'delete_permission_of', $global_user_response['response'][0]['role'])) {
-                                                $condition = "id = '".$itemID."'"; 
-                                                
+                                                $condition = "id = '".$itemID."'";
+
                                                 deleteData($db_prefix.'permission', $condition);
                                             }
                                         }
@@ -1523,8 +1523,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                             if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'edit_permission', $global_user_response['response'][0]['role'])) {
                                                 $columns = ['status', 'updated_date'];
                                                 $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                                $condition = "id = '".$itemID."'"; 
-                                                
+                                                $condition = "id = '".$itemID."'";
+
                                                 updateData($db_prefix.'permission', $columns, $values, $condition);
                                             }
                                         }
@@ -1533,8 +1533,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                             if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'staff', 'edit_permission', $global_user_response['response'][0]['role'])) {
                                                 $columns = ['status', 'updated_date'];
                                                 $values = ['suspend', getCurrentDatetime('Y-m-d H:i:s')];
-                                                $condition = "id = '".$itemID."'"; 
-                                                
+                                                $condition = "id = '".$itemID."'";
+
                                                 updateData($db_prefix.'permission', $columns, $values, $condition);
                                             }
                                         }
@@ -1573,8 +1573,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_staff['response'][0]['id'] == $global_user_response['response'][0]['id']){
                                 echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'You cannot delete your own permission.' , 'csrf_token' => $new_csrf_token]);
                             }else{
-                                $condition = "id = '".$ItemID."'"; 
-                                
+                                $condition = "id = '".$ItemID."'";
+
                                 deleteData($db_prefix.'permission', $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Staff Permission Deleted', 'message' => 'The staff member permission have been deleted successfully.', 'csrf_token' => $new_csrf_token]);
@@ -1629,7 +1629,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if ($response_brand['status'] == true) {
                                 foreach ($response_brand['response'] as $row) {
                                     $response_permission = json_decode(getData($db_prefix . 'permission', ' WHERE a_id = "'.$response_staff['response'][0]['a_id'].'" AND brand_id = "'.$row['brand_id'].'"'), true);
-                                    
+
                                     if($response_permission['status'] == true){
 
                                     }else{
@@ -1703,13 +1703,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = ['permission', 'updated_date', 'status'];
                             $values = [$permission_json, getCurrentDatetime('Y-m-d H:i:s'), $status];
 
-                            $condition = "id = '".$permission_id."'"; 
-                            
+                            $condition = "id = '".$permission_id."'";
+
                             updateData($db_prefix.'permission', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Permissions Updated', 'message' => 'The staff brand permissions has been created successfully.', 'csrf_token' => $new_csrf_token]);
                         }else{
-                            echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);                            
+                            echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
                         }
                     }else{
                         echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
@@ -1913,69 +1913,69 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     }else{
                                         if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'brands', 'delete', $global_user_response['response'][0]['role'])) {
-                                        
-                                            $condition = "brand_id = '".$itemID."'"; 
-                                            
+
+                                            $condition = "brand_id = '".$itemID."'";
+
                                             deleteData($db_prefix.'brands', $condition);
 
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'api', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'currency', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'customer', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'env', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'faq', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'gateways', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'gateways_parameter', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'invoice', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'invoice_items', $condition);
 
                                             $response_payment_link_filed = json_decode(getData($db_prefix.'payment_link','WHERE brand_id = "'.$response_brand['response'][0]['brand_id'].'"'),true);
                                             foreach($response_payment_link_filed['response'] as $row_paymentfiled){
-                                                $condition = "paymentLinkID = '".$row_paymentfiled['ref']."'"; 
-                                                
+                                                $condition = "paymentLinkID = '".$row_paymentfiled['ref']."'";
+
                                                 deleteData($db_prefix.'payment_link_field', $condition);
                                             }
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'payment_link', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'permission', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'transaction', $condition);
 
-                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                            
+                                            $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                             deleteData($db_prefix.'webhook_log', $condition);
                                         }
                                     }
@@ -2014,68 +2014,68 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['response'][0]['id'] == 1 || $response_brand['response'][0]['brand_id'] == $global_response_brand['response'][0]['brand_id']){
                                 echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
                             }else{
-                                $condition = "brand_id = '".$ItemID."'"; 
-                                
+                                $condition = "brand_id = '".$ItemID."'";
+
                                 deleteData($db_prefix.'brands', $condition);
 
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'api', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'currency', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'customer', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'env', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'faq', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'gateways', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'gateways_parameter', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'invoice', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'invoice_items', $condition);
 
                                 $response_payment_link_filed = json_decode(getData($db_prefix.'payment_link','WHERE brand_id = "'.$response_brand['response'][0]['brand_id'].'"'),true);
                                 foreach($response_payment_link_filed['response'] as $row_paymentfiled){
-                                    $condition = "paymentLinkID = '".$row_paymentfiled['ref']."'"; 
-                                    
+                                    $condition = "paymentLinkID = '".$row_paymentfiled['ref']."'";
+
                                     deleteData($db_prefix.'payment_link_field', $condition);
                                 }
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'payment_link', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'permission', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'transaction', $condition);
 
-                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'"; 
-                                
+                                $condition = "brand_id = '".$response_brand['response'][0]['brand_id']."'";
+
                                 deleteData($db_prefix.'webhook_log', $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Brands Deleted', 'message' => 'The selected brand have been deleted successfully.', 'csrf_token' => $new_csrf_token]);
@@ -2123,8 +2123,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                             $columns = ['identify_name', 'updated_date'];
                             $values = [$brand_name, getCurrentDatetime('Y-m-d H:i:s')];
-                            $condition = "brand_id = '".$brand_id."'"; 
-                            
+                            $condition = "brand_id = '".$brand_id."'";
+
                             updateData($db_prefix.'brands', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Brand Updated', 'message' => 'The brand has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -2355,8 +2355,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['domain', 'status', 'updated_date'];
                                 $values = [$domain_name, $domain_status, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "id = '".$domain_id."'"; 
-                                
+                                $condition = "id = '".$domain_id."'";
+
                                 updateData($db_prefix.'domain', $columns, $values, $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Domain Updated', 'message' => 'The domain has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -2384,8 +2384,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'domain','WHERE id = "'.$ItemID.'" '),true);
                     if($response_brand['status'] == true){
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         deleteData($db_prefix.'domain', $condition);
                     }
 
@@ -2415,20 +2415,20 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'domains', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "id = '".$itemID."'";
+
                                         deleteData($db_prefix.'domain', $condition);
 
                                     }
                                 }
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'domains', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'domain', $columns, $values, $condition);
 
                                     }
@@ -2436,11 +2436,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactive"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'domains', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'domain', $columns, $values, $condition);
 
                                     }
@@ -2469,7 +2469,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         exit();
                     }
 
-                    $cron_command = bin2hex(random_bytes(8)); 
+                    $cron_command = bin2hex(random_bytes(8));
 
                     set_env('cron-job', $cron_command);
 
@@ -2751,7 +2751,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     }
 
                     if(empty($gatewayData)) {
-                        $gatewayData['No Data'] = [1]; 
+                        $gatewayData['No Data'] = [1];
                         $gatewayLabels = ['No Data'];
                         $gatewayColors['No Data'] = '#f0f0f0'; // light grey
                     }
@@ -2924,18 +2924,18 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $currencyRes = json_decode(getData($db_prefix.'currency', ' WHERE brand_id = "'.$brand_id.'"'), true);
                         if (!empty($currencyRes['response'])) {
                             foreach ($currencyRes['response'] as $c) {
-                                $currencyRates[$c['code']] = (string)$c['rate']; 
+                                $currencyRates[$c['code']] = (string)$c['rate'];
                             }
                         }
 
                         $global_brand_currency_code = $global_response_brand['response'][0]['currency_code'];
-                        $global_brand_currency_rate = "1"; 
+                        $global_brand_currency_rate = "1";
 
                         $res = json_decode(getData($db_prefix.'transaction', " WHERE brand_id='$brand_id' AND status NOT IN ('initiated', 'expired') AND $where"), true);
 
                         $total = 0;
                         $completed = 0;
-                        $revenue = "0"; 
+                        $revenue = "0";
 
                         foreach ($res['response'] as $row) {
                             $total++;
@@ -3176,9 +3176,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'customers', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+
+                                        $condition = "ref = '".$itemID."'";
+
                                         deleteData($db_prefix.'customer', $condition);
 
                                     }
@@ -3186,11 +3186,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'customers', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         updateData($db_prefix.'customer', $columns, $values, $condition);
 
                                     }
@@ -3198,11 +3198,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "suspended"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'customers', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['suspend', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         updateData($db_prefix.'customer', $columns, $values, $condition);
 
                                     }
@@ -3236,8 +3236,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'customer','WHERE ref = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" '),true);
                     if($response_brand['status'] == true){
-                        $condition = "ref = '".$ItemID."'"; 
-                        
+                        $condition = "ref = '".$ItemID."'";
+
                         deleteData($db_prefix.'customer', $condition);
                     }
 
@@ -3313,7 +3313,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 }else{
                                     $responseCheck = json_decode(getData($db_prefix.'customer','WHERE brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND email ="'.$email.'"'),true);
                                     if($responseCheck['status'] == false){
-                                        
+
                                     }else{
                                         echo json_encode(['status' => 'false', 'title' => 'Duplicate Customer', 'message' => 'A customer with this email address already exists. Please choose a different email address.' , 'csrf_token' => $new_csrf_token]);
                                         exit();
@@ -3322,8 +3322,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['name', 'email', 'mobile', 'status', 'suspend_reason', 'updated_date'];
                                 $values = [$name, $email, $mobile, $status, $suspend_reason, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "ref = '".$customer_id."'"; 
-                                
+                                $condition = "ref = '".$customer_id."'";
+
                                 updateData($db_prefix.'customer', $columns, $values, $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Customer Updated', 'message' => 'The customer has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -3690,13 +3690,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = ['currency', 'due_date', 'shipping', 'status', 'note', 'private_note', 'updated_date'];
                             $values = [$currency, $due_date, money_sanitize($shipping), $status, $note, $private_note_content, getCurrentDatetime('Y-m-d H:i:s')];
 
-                            $condition = "ref = '".$invoiceID."'"; 
-                            
+                            $condition = "ref = '".$invoiceID."'";
+
                             updateData($db_prefix.'invoice', $columns, $values, $condition);
 
                             foreach ($deletedItems as $itemId) {
-                                $condition = "id = '".$itemId."'"; 
-                                
+                                $condition = "id = '".$itemId."'";
+
                                 deleteData($db_prefix.'invoice_items', $condition);
                             }
 
@@ -3714,8 +3714,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     if($itemidS !== ""){
                                         $columns = ['description', 'amount', 'quantity', 'discount', 'vat', 'updated_date'];
                                         $values = [$descriptions, money_sanitize($amounts), money_sanitize($quantities), money_sanitize($discounts), money_sanitize($vats), getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemidS."'"; 
-                                        
+                                        $condition = "id = '".$itemidS."'";
+
                                         updateData($db_prefix.'invoice_items', $columns, $values, $condition);
                                     }else{
                                         $columns = ['invoice_id', 'brand_id', 'description', 'amount', 'quantity', 'discount', 'vat', 'created_date', 'updated_date'];
@@ -3784,8 +3784,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $columns = ['status', 'updated_date'];
                         $values = [$status, getCurrentDatetime('Y-m-d H:i:s')];
 
-                        $condition = "ref = '".$invoiceID."'"; 
-                        
+                        $condition = "ref = '".$invoiceID."'";
+
                         updateData($db_prefix.'invoice', $columns, $values, $condition);
 
                         $invoice_items_array = [];
@@ -3849,12 +3849,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'invoice', 'delete', $global_user_response['response'][0]['role'])) {
-                                        $condition = "invoice_id = '".$itemID."'"; 
-                                        
+                                        $condition = "invoice_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'invoice_items', $condition);
 
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         deleteData($db_prefix.'invoice', $condition);
                                     }
                                 }
@@ -3886,12 +3886,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'invoice','WHERE ref = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "invoice_id = '".$ItemID."'"; 
-                        
+                        $condition = "invoice_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'invoice_items', $condition);
 
-                        $condition = "ref = '".$ItemID."'"; 
-                        
+                        $condition = "ref = '".$ItemID."'";
+
                         deleteData($db_prefix.'invoice', $condition);
                     }
 
@@ -4052,13 +4052,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'payment_link', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "paymentLinkID = '".$itemID."'"; 
-                                        
+
+                                        $condition = "paymentLinkID = '".$itemID."'";
+
                                         deleteData($db_prefix.'payment_link_field', $condition);
 
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         deleteData($db_prefix.'payment_link', $condition);
 
                                     }
@@ -4066,11 +4066,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'payment_link', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         updateData($db_prefix.'payment_link', $columns, $values, $condition);
 
                                     }
@@ -4078,11 +4078,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'payment_link', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "ref = '".$itemID."'"; 
-                                        
+                                        $condition = "ref = '".$itemID."'";
+
                                         updateData($db_prefix.'payment_link', $columns, $values, $condition);
 
                                     }
@@ -4115,12 +4115,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'payment_link','WHERE ref = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "paymentLinkID = '".$ItemID."'"; 
-                        
+                        $condition = "paymentLinkID = '".$ItemID."'";
+
                         deleteData($db_prefix.'payment_link_field', $condition);
 
-                        $condition = "ref = '".$ItemID."'"; 
-                        
+                        $condition = "ref = '".$ItemID."'";
+
                         deleteData($db_prefix.'payment_link', $condition);
                     }
 
@@ -4253,13 +4253,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $columns = ['product_info', 'amount', 'quantity', 'currency', 'expired_date', 'status', 'updated_date'];
                         $values = [$product_info, money_sanitize($amount), money_sanitize($quantity), $currency, $expiry_date, $status, getCurrentDatetime('Y-m-d H:i:s')];
 
-                        $condition = "ref = '".$paymentLinkID."'"; 
-                        
+                        $condition = "ref = '".$paymentLinkID."'";
+
                         updateData($db_prefix.'payment_link', $columns, $values, $condition);
 
                         foreach ($deletedItems as $itemId) {
-                            $condition = "id = '".$itemId."'"; 
-                            
+                            $condition = "id = '".$itemId."'";
+
                             deleteData($db_prefix.'payment_link_field', $condition);
                         }
 
@@ -4289,8 +4289,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 $columns = ['formType', 'fieldName', 'required', 'value', 'updated_date'];
                                 $values = [$formType, $fieldName, $required, $value, getCurrentDatetime('Y-m-d H:i:s')];
 
-                                $condition = "id = '".$fieldID."'"; 
-                                
+                                $condition = "id = '".$fieldID."'";
+
                                 updateData($db_prefix.'payment_link_field', $columns, $values, $condition);
                             }
                         }
@@ -4435,12 +4435,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         if($response['status'] == true){
                             $columns = ['symbol', 'rate', 'updated_date'];
                             $values = [$currency_symbol, money_sanitize($currency_rate), getCurrentDatetime('Y-m-d H:i:s')];
-                            $condition = "id = '".$currency_id."'"; 
-                            
+                            $condition = "id = '".$currency_id."'";
+
                             updateData($db_prefix.'currency', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Currency Updated', 'message' => 'The currency has been updated successfully.', 'csrf_token' => $new_csrf_token]);
-                        
+
                         }else{
                             echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid Currency ID' , 'csrf_token' => $new_csrf_token]);
                         }
@@ -4545,7 +4545,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     $response_brand = json_decode(getData($db_prefix.'currency','WHERE id = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'"'),true);
                     if($response_brand['status'] == true){
 
-                            
+
                         $url = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/'.strtolower($global_brand_currency_code).'.json';
 
                         $ch = curl_init($url);
@@ -4567,7 +4567,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         }
 
                         $rates = $data[strtolower($global_brand_currency_code)];
-                        
+
 
                         foreach ($rates as $currency => $rate) {
 
@@ -4583,8 +4583,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 $columns = ['rate', 'updated_date'];
                                 $values = [money_div(1, money_sanitize(sprintf('%.14f',$rate))), getCurrentDatetime('Y-m-d H:i:s')];
 
-                                $condition = 'brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND id = "'.$ItemID.'"'; 
-                                
+                                $condition = 'brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND id = "'.$ItemID.'"';
+
                                 updateData($db_prefix.'currency', $columns, $values, $condition);
 
                                 break;
@@ -4645,8 +4645,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $columns = ['rate', 'updated_date'];
                         $values = [money_div(1, money_sanitize(sprintf('%.14f',$rate))), getCurrentDatetime('Y-m-d H:i:s')];
 
-                        $condition = 'brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND code = "'.$currency.'"'; 
-                        
+                        $condition = 'brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND code = "'.$currency.'"';
+
                         updateData($db_prefix.'currency', $columns, $values, $condition);
                     }
 
@@ -4668,17 +4668,37 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         exit();
                     }
 
-                    $homepageRedirect = escape_string($_POST['homepageRedirect'] ?? '');
-                    $adminPath = escape_string($_POST['adminPath'] ?? '');
-                    $invoicePath = escape_string($_POST['invoicePath'] ?? '');
-                    $paymentLinkPath = escape_string($_POST['paymentLinkPath'] ?? '');
-                    $paymentPath = escape_string($_POST['paymentPath'] ?? '');
-                    $cronPath = escape_string($_POST['cronPath'] ?? '');
+                    $homepageRedirect = trim(escape_string($_POST['homepageRedirect'] ?? ''));
+                    $adminPath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['adminPath'] ?? ''))));
+                    if (empty($adminPath)) {
+                        $adminPath = 'admin';
+                    }
+                    $loginPath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['loginPath'] ?? ''))));
+                    if (empty($loginPath)) {
+                        $loginPath = 'login';
+                    }
+                    $invoicePath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['invoicePath'] ?? ''))));
+                    if (empty($invoicePath)) {
+                        $invoicePath = 'invoice';
+                    }
+                    $paymentLinkPath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['paymentLinkPath'] ?? ''))));
+                    if (empty($paymentLinkPath)) {
+                        $paymentLinkPath = 'payment-link';
+                    }
+                    $paymentPath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['paymentPath'] ?? ''))));
+                    if (empty($paymentPath)) {
+                        $paymentPath = 'payment';
+                    }
+                    $cronPath = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '', escape_string($_POST['cronPath'] ?? ''))));
+                    if (empty($cronPath)) {
+                        $cronPath = 'cron';
+                    }
                     $default_timezone = escape_string($_POST['default_timezone'] ?? '');
                     $webhook_attempts_limit = escape_string($_POST['webhook_attempts_limit'] ?? '');
 
                     set_env('geneal-application-settings-homepageRedirect', $homepageRedirect);
                     set_env('geneal-application-settings-adminPath', $adminPath);
+                    set_env('geneal-application-settings-loginPath', $loginPath);
                     set_env('geneal-application-settings-invoicePath', $invoicePath);
                     set_env('geneal-application-settings-paymentLinkPath', $paymentLinkPath);
                     set_env('geneal-application-settings-paymentPath', $paymentPath);
@@ -4686,7 +4706,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     set_env('geneal-application-settings-default_timezone', $default_timezone);
                     set_env('geneal-application-settings-webhook_attempts_limit', $webhook_attempts_limit);
 
-                    echo json_encode(['status' => 'true', 'title' => 'Settings Updated', 'message' => 'The application settings has been updated successfully.', 'csrf_token' => $new_csrf_token]);
+                    echo json_encode(['status' => 'true', 'title' => 'Settings Updated', 'message' => 'The application settings has been updated successfully.', 'new_admin_path' => $adminPath, 'new_login_path' => $loginPath, 'csrf_token' => $new_csrf_token]);
                 }else{
                     echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request' , 'csrf_token' => $new_csrf_token]);
                 }
@@ -4892,8 +4912,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = [ 'title', 'description', 'status', 'updated_date'];
                             $values = [$faq_title, $faq_description, $faq_status, getCurrentDatetime('Y-m-d H:i:s')];
 
-                            $condition = "id = '".$faq_id."'"; 
-                            
+                            $condition = "id = '".$faq_id."'";
+
                             updateData($db_prefix.'faq', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'FAQ Updated', 'message' => 'The faq has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -4930,19 +4950,19 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'faq_settings', 'delete', $global_user_response['response'][0]['role'])) {
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         deleteData($db_prefix.'faq', $condition);
                                     }
                                 }
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'faq_settings', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'faq', $columns, $values, $condition);
 
                                     }
@@ -4950,11 +4970,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'faq_settings', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'faq', $columns, $values, $condition);
 
                                     }
@@ -4987,8 +5007,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'faq','WHERE id = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         deleteData($db_prefix.'faq', $condition);
                     }
 
@@ -5237,9 +5257,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'api_settings', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "id = '".$itemID."'";
+
                                         deleteData($db_prefix.'api', $condition);
 
                                     }
@@ -5247,11 +5267,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'api_settings', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'api', $columns, $values, $condition);
 
                                     }
@@ -5259,11 +5279,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'api_settings', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'api', $columns, $values, $condition);
 
                                     }
@@ -5301,8 +5321,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'api','WHERE id = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" '),true);
                     if($response_brand['status'] == true){
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         deleteData($db_prefix.'api', $condition);
                     }
 
@@ -5367,8 +5387,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = ['name', 'expired_date', 'status', 'api_scopes', 'updated_date'];
                             $values = [$api_name, $apiExpiryDate, $api_status, $scopes_json, getCurrentDatetime('Y-m-d H:i:s')];
 
-                            $condition = "id = '".$api_id."'"; 
-                            
+                            $condition = "id = '".$api_id."'";
+
                             updateData($db_prefix.'api', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Api Updated', 'message' => 'The api has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -5421,12 +5441,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if($autoExchange == ""){
                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
                     }else{
-                        $max_file_size = 2 * 1024 * 1024; 
-                        
+                        $max_file_size = 2 * 1024 * 1024;
+
                         $branding_favicon = json_decode(uploadImage($_FILES['favicon']?? null, $max_file_size), true);
                         if($branding_favicon['status'] == true){
                             $branding_favicon = $site_url.'pp-media/storage/'.$branding_favicon['file'];
-                            
+
                             deleteImage($global_response_brand['response'][0]['favicon']);
                         }else{
                             $branding_favicon = $global_response_brand['response'][0]['favicon'];
@@ -5435,7 +5455,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $branding_primary_logo = json_decode(uploadImage($_FILES['primary_logo']?? null, $max_file_size), true);
                         if($branding_primary_logo['status'] == true){
                             $branding_primary_logo = $site_url.'pp-media/storage/'.$branding_primary_logo['file'];
-                            
+
                             deleteImage($global_response_brand['response'][0]['logo']);
                         }else{
                             $branding_primary_logo = $global_response_brand['response'][0]['logo'];
@@ -5448,8 +5468,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                         $columns = ['autoExchange', 'favicon', 'logo', 'name', 'timezone', 'language', 'currency_code', 'payment_tolerance', 'street_address', 'city_town', 'postal_code', 'country', 'support_phone_number', 'support_email_address', 'support_website', 'whatsapp_number', 'telegram', 'facebook_messenger', 'facebook_page', 'updated_date'];
                         $values = [$autoExchange, $branding_favicon, $branding_primary_logo, $site_name, $default_timezone, $default_language, $default_currency, money_sanitize($payment_tolerance), $street_address, $city_town, $postal_code, $country, $support_phone_number, $support_email_address, $support_website, $whatsapp_number, $telegram, $facebook_messenger, $facebook_page, getCurrentDatetime('Y-m-d H:i:s')];
-                        $condition = "brand_id = '".$global_response_brand['response'][0]['brand_id']."'"; 
-                        
+                        $condition = "brand_id = '".$global_response_brand['response'][0]['brand_id']."'";
+
                         updateData($db_prefix.'brands', $columns, $values, $condition);
 
                         echo json_encode(['status' => 'true', 'title' => 'Brand Setting Updated', 'message' => 'The brand setting has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -5491,7 +5511,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $where[] = "updated_date < (NOW() - INTERVAL 6 MINUTE)";
                         }
                     }
-                    
+
                     $where_sql = $where ? implode(' AND ', $where) . ' AND ' : '';
                     /* Filters */
 
@@ -5596,12 +5616,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'device','WHERE device_id = "'.$ItemID.'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "device_id = '".$ItemID."'"; 
-                        
+                        $condition = "device_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'device', $condition);
 
-                        $condition = "device_id = '".$response_brand['response'][0]['device_id']."'"; 
-                        
+                        $condition = "device_id = '".$response_brand['response'][0]['device_id']."'";
+
                         deleteData($db_prefix.'balance_verification', $condition);
                     }
 
@@ -5630,13 +5650,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'device', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "device_id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "device_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'device', $condition);
 
-                                        $condition = "device_id = '".$response_brand['response'][0]['device_id']."'"; 
-                                        
+                                        $condition = "device_id = '".$response_brand['response'][0]['device_id']."'";
+
                                         deleteData($db_prefix.'balance_verification', $condition);
                                     }
                                 }
@@ -5670,8 +5690,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if($response_brand['status'] == true){
                         $columns = ['otp', 'updated_date'];
                         $values = [$otp, getCurrentDatetime('Y-m-d H:i:s')];
-                        $condition = "id = '".$response_brand['response'][0]['id']."'"; 
-                        
+                        $condition = "id = '".$response_brand['response'][0]['id']."'";
+
                         updateData($db_prefix.'device', $columns, $values, $condition);
 
                         echo json_encode(['status' => 'true', 'otp' => $otp, 'csrf_token' => $new_csrf_token]);
@@ -5724,7 +5744,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if ($filter_status !== '') {
                         $where[] = "status = '{$filter_status}'";
                     }
-                    
+
                     $where_sql = $where ? implode(' AND ', $where) . ' AND ' : '';
                     /* Filters */
 
@@ -5842,9 +5862,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'device', 'balance_verification_for', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "id = '".$itemID."'";
+
                                         deleteData($db_prefix.'balance_verification', $condition);
 
                                     }
@@ -5852,11 +5872,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'device', 'balance_verification_for', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'balance_verification', $columns, $values, $condition);
 
                                     }
@@ -5864,11 +5884,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'device', 'balance_verification_for', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'balance_verification', $columns, $values, $condition);
 
                                     }
@@ -5901,8 +5921,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'balance_verification','WHERE id = "'.$ItemID.'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         deleteData($db_prefix.'balance_verification', $condition);
                     }
 
@@ -5987,8 +6007,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                         $columns = ['current_balance', 'updated_date'];
                         $values = [money_sanitize($balance),  getCurrentDatetime('Y-m-d H:i:s')];
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                     }
 
@@ -6067,8 +6087,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = ['sender_key', 'type', 'current_balance', 'simslot', 'status', 'updated_date'];
                             $values = [$sender_key, $payment_type, money_sanitize($current_balance), $simslot, $balance_verification_status, getCurrentDatetime('Y-m-d H:i:s')];
 
-                            $condition = "id = '".$itemID."'"; 
-                            
+                            $condition = "id = '".$itemID."'";
+
                             updateData($db_prefix.'balance_verification', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Balance Verification Updated', 'message' => 'The balance verification has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -6239,8 +6259,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'sms_data','WHERE id = "'.$ItemID.'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "id = '".$ItemID."'"; 
-                        
+                        $condition = "id = '".$ItemID."'";
+
                         deleteData($db_prefix.'sms_data', $condition);
                     }
 
@@ -6269,9 +6289,9 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'sms_data', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "id = '".$itemID."'";
+
                                         deleteData($db_prefix.'sms_data', $condition);
 
                                     }
@@ -6279,11 +6299,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID !== "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'sms_data', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = [$actionID, getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$itemID."'"; 
-                                        
+                                        $condition = "id = '".$itemID."'";
+
                                         updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
                                     }
@@ -6363,8 +6383,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                             $columns = ['current_balance', 'updated_date'];
                                             $values = [$balance, getCurrentDatetime('Y-m-d H:i:s')];
-                                            $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                            
+                                            $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                             updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                         }*/
 
@@ -6375,7 +6395,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                         echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.'.$amount, 'csrf_token' => $new_csrf_token]);
                                     }else{
-                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]); 
+                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]);
                                     }
                                 }
                             }
@@ -6400,8 +6420,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                         $columns = ['current_balance', 'updated_date'];
                                         $values = [$balance, getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                         updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                     }*/
 
@@ -6412,7 +6432,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.', 'csrf_token' => $new_csrf_token]);
                                 }else{
-                                    echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]); 
+                                    echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]);
                                 }
                             }
                         }
@@ -6510,7 +6530,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                         if($response['response'][0]['id'] == $itemid){
 
                                         }else{
-                                            echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]); 
+                                            echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]);
                                             exit();
                                         }
                                     }
@@ -6525,16 +6545,16 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                         $columns = ['current_balance', 'updated_date'];
                                         $values = [$balance, getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                         updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                     }*/
 
                                     $columns = ['device_id', 'sender_key', 'number', 'amount', 'currency', 'trx_id', 'balance', 'type', 'entry_type', 'status', 'message', 'updated_date'];
                                     $values = [$device_id, $sender_key, $phone_number, money_sanitize($amount), $currency, $transaction_id, money_sanitize($balance), $type, $entry_type, $status, $message, getCurrentDatetime('Y-m-d H:i:s')];
 
-                                    $condition = "id = '".$itemid."'"; 
-                                    
+                                    $condition = "id = '".$itemid."'";
+
                                     updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
                                     echo json_encode(['status' => 'true', 'title' => 'SMS Data Updated', 'message' => 'The sms data has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -6552,7 +6572,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     if($response['response'][0]['id'] == $itemid){
 
                                     }else{
-                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]); 
+                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]);
                                         exit();
                                     }
                                 }
@@ -6569,16 +6589,16 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     $columns = ['current_balance', 'updated_date'];
                                     $values = [$balance, getCurrentDatetime('Y-m-d H:i:s')];
-                                    $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                    
+                                    $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                     updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                 }*/
 
                                 $columns = ['device_id', 'sender_key', 'number', 'amount', 'currency', 'trx_id', 'balance', 'type', 'entry_type', 'status', 'message', 'updated_date'];
                                 $values = [$device_id, $sender_key, $phone_number, money_sanitize($amount), $currency, $transaction_id, money_sanitize($balance), $type, $entry_type, $status, $message, getCurrentDatetime('Y-m-d H:i:s')];
 
-                                $condition = "id = '".$itemid."'"; 
-                                
+                                $condition = "id = '".$itemid."'";
+
                                 updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
                                 echo json_encode(['status' => 'true', 'title' => 'SMS Data Updated', 'message' => 'The sms data has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -6629,8 +6649,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     $columns = ['theme', 'updated_date'];
                     $values = [$slug, getCurrentDatetime('Y-m-d H:i:s')];
 
-                    $condition = "id = '".$global_response_brand['response'][0]['id']."'"; 
-                    
+                    $condition = "id = '".$global_response_brand['response'][0]['id']."'";
+
                     updateData($db_prefix.'brands', $columns, $values, $condition);
 
                     echo json_encode(['status' => 'true', 'title' => 'Theme Activated', 'message' => 'The theme has been activated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -6675,10 +6695,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         // Skip empty uploads
                         if (empty($file['name'])) continue;
 
-                        $max_file_size = 5 * 1024 * 1024; 
+                        $max_file_size = 5 * 1024 * 1024;
 
                         $optionName = $themeSlug.'-'.$key;
-                        
+
                         $mediaUpload = json_decode(uploadImage($_FILES[$key] ?? null, $max_file_size), true);
                         if($mediaUpload['status'] == true){
                             set_env($optionName, $site_url.'pp-media/storage/'.$mediaUpload['file'], $global_response_brand['response'][0]['brand_id']);
@@ -6857,8 +6877,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 if($response_brand['status'] == true){
                                     if($actionID == "deleted"){
                                         if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'transaction', 'delete', $global_user_response['response'][0]['role'])) {
-                                            $condition = "ref = '".$itemID."'"; 
-                                            
+                                            $condition = "ref = '".$itemID."'";
+
                                             deleteData($db_prefix.'transaction', $condition);
                                         }
                                     }
@@ -6868,8 +6888,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                             $columns = ['status', 'updated_date'];
                                             $values = ['completed', getCurrentDatetime('Y-m-d H:i:s')];
 
-                                            $condition = "ref = '".$itemID."'"; 
-                                            
+                                            $condition = "ref = '".$itemID."'";
+
                                             updateData($db_prefix.'transaction', $columns, $values, $condition);
                                         }
                                     }
@@ -6940,7 +6960,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                 $response_brand['response'][0]['source_info'] = json_encode($source_info, JSON_UNESCAPED_UNICODE);
                                             }
 
-                                            $condition = "ref = '".$itemID."'"; 
+                                            $condition = "ref = '".$itemID."'";
                                             updateData($db_prefix.'transaction', $columns, $values, $condition);
 
                                             $response_brand['response'][0]['status'] = 'refunded';
@@ -6952,8 +6972,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                             $columns = ['status', 'updated_date'];
                                             $values = ['canceled', getCurrentDatetime('Y-m-d H:i:s')];
 
-                                            $condition = "ref = '".$itemID."'"; 
-                                            
+                                            $condition = "ref = '".$itemID."'";
+
                                             updateData($db_prefix.'transaction', $columns, $values, $condition);
                                         }
                                     }
@@ -6996,7 +7016,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                 ];
 
                                                 $payload = json_encode($ipnData, JSON_UNESCAPED_UNICODE);
-                                                
+
                                                 $jobs[] = [
                                                     'id'      => rand(),
                                                     'url'     => $response_brand['response'][0]['webhook_url'],
@@ -7100,8 +7120,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'transaction','WHERE ref = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'"'),true);
                     if($response_brand['status'] == true){
-                        $condition = "ref = '".$ItemID."'"; 
-                        
+                        $condition = "ref = '".$ItemID."'";
+
                         deleteData($db_prefix.'transaction', $condition);
                     }
 
@@ -7359,7 +7379,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         }
 
                         if($update_available == true){
-                            $root = realpath(__DIR__ . '/../../'); 
+                            $root = realpath(__DIR__ . '/../../');
                             $storage = __DIR__ . '/../../pp-media/storage/';
 
                             $backupDir = $storage . 'backup/';
@@ -7712,6 +7732,224 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                 }
             }
 
+            if($action == "system-settings-notification-save"){
+                if($global_user_login == true){
+                    if (!empty($pp_demo_mode)) {
+                        echo json_encode(['status' => "false", 'title' => 'Demo Restriction', 'message' => 'This feature is disabled in the demo version.', 'csrf_token' => $new_csrf_token]);
+                    }else{
+                        if (!canAccessPage(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', $global_user_response['response'][0]['role'])) {
+                            echo json_encode(['status' => 'false', 'title' => 'Access denied', 'message' => 'You need permission to perform this action. Please contact the admin.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+
+                        if (!hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', 'manage_notification', $global_user_response['response'][0]['role'])) {
+                            echo json_encode(['status' => 'false', 'title' => 'Access denied', 'message' => 'You need permission to perform this action. Please contact the admin.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+
+                        $fields = [
+                            // Telegram
+                            'notification_telegram_token',
+                            'notification_telegram_chat_id',
+                            'notification_telegram_topic_id',
+                            // Discord
+                            'notification_discord_webhook',
+                            'notification_discord_bot_name',
+                            // WhatsApp
+                            'notification_whatsapp_api_url',
+                            'notification_whatsapp_api_key',
+                            'notification_whatsapp_sender',
+                            'notification_whatsapp_target_phone',
+                            // Email
+                            'notification_email_smtp_host',
+                            'notification_email_smtp_port',
+                            'notification_email_smtp_enc',
+                            'notification_email_smtp_user',
+                            'notification_email_smtp_pass',
+                            'notification_email_from_name',
+                            'notification_email_from',
+                            'notification_email_admin_recipients',
+                            // SMS
+                            'notification_sms_api_url',
+                            'notification_sms_api_key',
+                            'notification_sms_sender_id',
+                            // Event Switches
+                            'notification_event_admin_payment_success_telegram',
+                            'notification_event_admin_payment_success_discord',
+                            'notification_event_admin_payment_success_whatsapp',
+                            'notification_event_admin_payment_success_email',
+                            'notification_event_admin_payment_failed_telegram',
+                            'notification_event_admin_payment_failed_discord',
+                            'notification_event_device_offline_telegram',
+                            'notification_event_device_offline_discord',
+                            'notification_event_device_offline_whatsapp',
+                            'notification_event_device_battery_telegram',
+                            'notification_event_device_battery_discord',
+                            'notification_event_customer_payment_success_email',
+                            'notification_event_customer_payment_success_sms'
+                        ];
+
+                        foreach ($fields as $field) {
+                            if (isset($_POST[$field])) {
+                                set_env($field, escape_string($_POST[$field]));
+                            }
+                        }
+
+                        echo json_encode(['status' => 'true', 'title' => 'Settings Saved', 'message' => 'Notification settings and routing rules have been updated successfully.', 'csrf_token' => $new_csrf_token]);
+                    }
+                }else{
+                    echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request', 'csrf_token' => $new_csrf_token]);
+                }
+            }
+
+            if($action == "system-settings-notification-test"){
+                if($global_user_login == true){
+                    if (!canAccessPage(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', $global_user_response['response'][0]['role'])) {
+                        echo json_encode(['status' => 'false', 'title' => 'Access denied', 'message' => 'You need permission to perform this action. Please contact the admin.', 'csrf_token' => $new_csrf_token]);
+                        exit();
+                    }
+
+                    if (!hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'system_settings', 'manage_notification', $global_user_response['response'][0]['role'])) {
+                        echo json_encode(['status' => 'false', 'title' => 'Access denied', 'message' => 'You need permission to perform this action. Please contact the admin.', 'csrf_token' => $new_csrf_token]);
+                        exit();
+                    }
+
+                    $channel = escape_string($_POST['channel'] ?? '');
+                    $siteName = get_env('geneal-brand-settings-title') ?: 'PipraPay';
+                    if ($siteName === '--') $siteName = 'PipraPay';
+
+                    if ($channel === 'telegram') {
+                        $token = !empty($_POST['notification_telegram_token']) ? trim($_POST['notification_telegram_token']) : get_env('notification_telegram_token');
+                        $chatId = !empty($_POST['notification_telegram_chat_id']) ? trim($_POST['notification_telegram_chat_id']) : get_env('notification_telegram_chat_id');
+                        $topicId = !empty($_POST['notification_telegram_topic_id']) ? trim($_POST['notification_telegram_topic_id']) : get_env('notification_telegram_topic_id');
+
+                        if (empty($token) || $token === '--' || empty($chatId) || $chatId === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Configuration', 'message' => 'Please enter your Telegram Bot Token and Chat ID to send a test message.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        $msg = "⚡ <b>PipraPay Test Notification</b>\n\n"
+                             . "✅ Your Telegram Bot notification system is working perfectly!\n"
+                             . "🕒 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n"
+                             . "🌐 <b>Platform:</b> {$siteName}";
+                        $res = pp_send_telegram($msg, $chatId, $token, $topicId);
+                        if (!empty($res['status'])) {
+                            echo json_encode(['status' => 'true', 'title' => 'Telegram Alert Sent', 'message' => $res['message'] ?? 'Test notification sent to Telegram successfully!', 'csrf_token' => $new_csrf_token]);
+                        } else {
+                            echo json_encode(['status' => 'false', 'title' => 'Telegram Error', 'message' => $res['message'] ?? 'Telegram API error. Please check your Bot Token and Chat ID.', 'csrf_token' => $new_csrf_token]);
+                        }
+                    } elseif ($channel === 'discord') {
+                        $webhook = !empty($_POST['notification_discord_webhook']) ? trim($_POST['notification_discord_webhook']) : get_env('notification_discord_webhook');
+                        $botName = !empty($_POST['notification_discord_bot_name']) ? trim($_POST['notification_discord_bot_name']) : get_env('notification_discord_bot_name');
+
+                        if (empty($webhook) || $webhook === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Configuration', 'message' => 'Please enter your Discord Webhook URL to send a test alert.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        $fields = [
+                            ['name' => 'Status', 'value' => '✅ Connected & Verified', 'inline' => true],
+                            ['name' => 'Platform', 'value' => $siteName, 'inline' => true],
+                            ['name' => 'Timestamp', 'value' => date('Y-m-d H:i:s'), 'inline' => false]
+                        ];
+                        $res = pp_send_discord("🔔 Discord Test Alert", "Your Discord webhook integration for **{$siteName}** is working properly.", $fields, 5793266, $webhook);
+                        if (!empty($res['status'])) {
+                            echo json_encode(['status' => 'true', 'title' => 'Discord Alert Sent', 'message' => $res['message'] ?? 'Test embed notification posted to Discord successfully!', 'csrf_token' => $new_csrf_token]);
+                        } else {
+                            echo json_encode(['status' => 'false', 'title' => 'Discord Error', 'message' => $res['message'] ?? 'Failed to send to Discord webhook. Please check the Webhook URL.', 'csrf_token' => $new_csrf_token]);
+                        }
+                    } elseif ($channel === 'whatsapp') {
+                        $apiUrl = !empty($_POST['notification_whatsapp_api_url']) ? trim($_POST['notification_whatsapp_api_url']) : get_env('notification_whatsapp_api_url');
+                        $apiKey = !empty($_POST['notification_whatsapp_api_key']) ? trim($_POST['notification_whatsapp_api_key']) : get_env('notification_whatsapp_api_key');
+                        $sender = !empty($_POST['notification_whatsapp_sender']) ? trim($_POST['notification_whatsapp_sender']) : get_env('notification_whatsapp_sender');
+                        $targetPhone = !empty($_POST['notification_whatsapp_target_phone']) ? trim($_POST['notification_whatsapp_target_phone']) : get_env('notification_whatsapp_target_phone');
+
+                        if (empty($apiUrl) || $apiUrl === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Configuration', 'message' => 'Please enter your WhatsApp API Endpoint URL first.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        if (empty($targetPhone) || $targetPhone === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Target Number', 'message' => 'Please enter a target WhatsApp phone number to receive the test message.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        $msg = "⚡ *PipraPay WhatsApp Test Notification*\n\nYour WhatsApp alert integration on {$siteName} is working properly!\nTime: " . date('Y-m-d H:i:s');
+                        $res = pp_send_whatsapp($targetPhone, $msg, ['api_url' => $apiUrl, 'api_key' => $apiKey, 'sender_id' => $sender]);
+                        if (!empty($res['status'])) {
+                            echo json_encode(['status' => 'true', 'title' => 'WhatsApp Alert Sent', 'message' => $res['message'] ?? 'Test message sent to WhatsApp successfully!', 'csrf_token' => $new_csrf_token]);
+                        } else {
+                            echo json_encode(['status' => 'false', 'title' => 'WhatsApp Error', 'message' => $res['message'] ?? 'WhatsApp API error. Verify your endpoint URL & API credentials.', 'csrf_token' => $new_csrf_token]);
+                        }
+                    } elseif ($channel === 'email') {
+                        $smtpHost = !empty($_POST['notification_email_smtp_host']) ? trim($_POST['notification_email_smtp_host']) : get_env('notification_email_smtp_host');
+                        $smtpPort = !empty($_POST['notification_email_smtp_port']) ? trim($_POST['notification_email_smtp_port']) : get_env('notification_email_smtp_port');
+                        $smtpEnc  = !empty($_POST['notification_email_smtp_enc']) ? trim($_POST['notification_email_smtp_enc']) : get_env('notification_email_smtp_enc');
+                        $smtpUser = !empty($_POST['notification_email_smtp_user']) ? trim($_POST['notification_email_smtp_user']) : get_env('notification_email_smtp_user');
+                        $smtpPass = !empty($_POST['notification_email_smtp_pass']) ? trim($_POST['notification_email_smtp_pass']) : get_env('notification_email_smtp_pass');
+                        $fromName = !empty($_POST['notification_email_from_name']) ? trim($_POST['notification_email_from_name']) : get_env('notification_email_from_name');
+                        $fromEmail = !empty($_POST['notification_email_from']) ? trim($_POST['notification_email_from']) : get_env('notification_email_from');
+                        $adminEmail = !empty($_POST['notification_email_admin_recipients']) ? trim($_POST['notification_email_admin_recipients']) : (get_env('notification_email_admin_recipients') ?: ($global_user_response['response'][0]['email'] ?? ''));
+
+                        if (empty($smtpHost) || $smtpHost === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing SMTP Host', 'message' => 'Please configure your SMTP Host, Username, and Password before testing.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        if (empty($adminEmail) || $adminEmail === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Recipient Email', 'message' => 'Please enter an Admin Alert Email recipient to receive the test email.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+
+                        $firstEmail = trim(explode(',', $adminEmail)[0]);
+                        $subject = "⚡ PipraPay SMTP Test Email";
+                        $html = "<div style='font-family: Arial, sans-serif; max-width: 500px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                            <h2 style='color: #4f46e5; margin-top: 0;'>SMTP Email Integration Verified</h2>
+                            <p>This is a test email confirming your SMTP server settings on <strong>{$siteName}</strong> are working correctly.</p>
+                            <p style='color: #64748b; font-size: 13px;'>Sent at: " . date('Y-m-d H:i:s') . "</p>
+                        </div>";
+                        $res = pp_send_email($firstEmail, $subject, $html, [
+                            'smtp_host' => $smtpHost,
+                            'smtp_port' => $smtpPort,
+                            'smtp_enc'  => $smtpEnc,
+                            'smtp_user' => $smtpUser,
+                            'smtp_pass' => $smtpPass,
+                            'from_name' => $fromName,
+                            'from_email'=> $fromEmail
+                        ]);
+                        if (!empty($res['status'])) {
+                            echo json_encode(['status' => 'true', 'title' => 'Email Sent', 'message' => $res['message'] ?? "Test email dispatched to {$firstEmail} successfully!", 'csrf_token' => $new_csrf_token]);
+                        } else {
+                            echo json_encode(['status' => 'false', 'title' => 'SMTP Error', 'message' => $res['message'] ?? 'Failed to send test email. Please verify SMTP host, port, username, and password.', 'csrf_token' => $new_csrf_token]);
+                        }
+                    } elseif ($channel === 'sms') {
+                        $smsUrl = !empty($_POST['notification_sms_api_url']) ? trim($_POST['notification_sms_api_url']) : get_env('notification_sms_api_url');
+                        $apiKey = !empty($_POST['notification_sms_api_key']) ? trim($_POST['notification_sms_api_key']) : get_env('notification_sms_api_key');
+                        $senderId = !empty($_POST['notification_sms_sender_id']) ? trim($_POST['notification_sms_sender_id']) : get_env('notification_sms_sender_id');
+                        $targetPhone = !empty($_POST['notification_whatsapp_target_phone']) ? trim($_POST['notification_whatsapp_target_phone']) : (get_env('notification_whatsapp_target_phone') ?: ($global_user_response['response'][0]['phone'] ?? ''));
+
+                        if (empty($smsUrl) || $smsUrl === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Configuration', 'message' => 'Please enter your SMS Gateway HTTP API URL before testing.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        if (empty($targetPhone) || $targetPhone === '--') {
+                            echo json_encode(['status' => 'false', 'title' => 'Missing Target Number', 'message' => 'Please configure a target recipient phone number to receive the test SMS.', 'csrf_token' => $new_csrf_token]);
+                            exit();
+                        }
+                        $msg = "PipraPay SMS Test Alert: SMS gateway integration is working properly on {$siteName}.";
+                        $res = pp_send_sms($targetPhone, $msg, [
+                            'api_url' => $smsUrl,
+                            'api_key' => $apiKey,
+                            'sender_id' => $senderId
+                        ]);
+                        if (!empty($res['status'])) {
+                            echo json_encode(['status' => 'true', 'title' => 'SMS Dispatched', 'message' => $res['message'] ?? "Test SMS dispatched to {$targetPhone} successfully!", 'csrf_token' => $new_csrf_token]);
+                        } else {
+                            echo json_encode(['status' => 'false', 'title' => 'SMS Error', 'message' => $res['message'] ?? 'Failed to dispatch SMS. Verify your API URL & parameters.', 'csrf_token' => $new_csrf_token]);
+                        }
+                    } else {
+                        echo json_encode(['status' => 'false', 'title' => 'Invalid Channel', 'message' => 'Unknown notification channel.', 'csrf_token' => $new_csrf_token]);
+                    }
+                }else{
+                    echo json_encode(['status' => 'false', 'title' => 'Request Failed', 'message' => 'Invalid request', 'csrf_token' => $new_csrf_token]);
+                }
+            }
+
             if($action == "gateway-create"){
                 if($global_user_login == true){
                     if (!canAccessPage(json_decode($global_response_permission['response'][0]['permission'], true), 'gateways', $global_user_response['response'][0]['role'])) {
@@ -7747,7 +7985,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 insertData($db_prefix.'gateways', $columns, $values);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Gateway Created', 'message' => 'The gateway has been created successfully.', 'csrf_token' => $new_csrf_token]);
-                            
+
                             }
                         }
                 }else{
@@ -7890,12 +8128,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'gateways','WHERE gateway_id = "'.$ItemID.'" AND brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" '),true);
                     if($response_brand['status'] == true){
-                        $condition = "gateway_id = '".$ItemID."'"; 
-                        
+                        $condition = "gateway_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'gateways', $condition);
 
-                        $condition = "gateway_id = '".$ItemID."'"; 
-                        
+                        $condition = "gateway_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'gateways_parameter', $condition);
                     }
 
@@ -7924,24 +8162,24 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'gateways', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "gateway_id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "gateway_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'gateways', $condition);
 
-                                        $condition = "gateway_id = '".$itemID."'"; 
-                                        
+                                        $condition = "gateway_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'gateways_parameter', $condition);
                                     }
                                 }
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'gateways', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "gateway_id = '".$itemID."'"; 
-                                        
+                                        $condition = "gateway_id = '".$itemID."'";
+
                                         updateData($db_prefix.'gateways', $columns, $values, $condition);
 
                                     }
@@ -7949,11 +8187,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'gateways', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "gateway_id = '".$itemID."'"; 
-                                        
+                                        $condition = "gateway_id = '".$itemID."'";
+
                                         updateData($db_prefix.'gateways', $columns, $values, $condition);
 
                                     }
@@ -8008,8 +8246,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         }else{
                             $response = json_decode(getData($db_prefix.'gateways','WHERE brand_id ="'.$global_response_brand['response'][0]['brand_id'].'" AND gateway_id ="'.$gateway_id.'"'),true);
                             if($response['status'] == true){
-                                $max_file_size = 2 * 1024 * 1024; 
-                                
+                                $max_file_size = 2 * 1024 * 1024;
+
                                 $assets_logo = json_decode(uploadImage($_FILES['gateway_logo'] ?? null, $max_file_size), true);
                                 if($assets_logo['status'] == true){
                                     $logo = $site_url.'pp-media/storage/'.$assets_logo['file'];
@@ -8019,8 +8257,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 $columns = ['display', 'logo', 'currency', 'min_allow', 'max_allow', 'fixed_discount', 'percentage_discount', 'fixed_charge', 'percentage_charge', 'primary_color', 'text_color', 'btn_color', 'btn_text_color', 'status', 'updated_date'];
                                 $values = [$display_name, $logo, $currency, money_sanitize($min_amount), money_sanitize($max_amount), money_sanitize($fixed_discount), money_sanitize($percentage_discount), money_sanitize($fixed_charge), money_sanitize($percentage_charge), $primary_color, $text_color, $btn_color, $btn_text_color, $status, getCurrentDatetime('Y-m-d H:i:s')];
-                                $condition = "gateway_id = '".$gateway_id."'"; 
-                                
+                                $condition = "gateway_id = '".$gateway_id."'";
+
                                 updateData($db_prefix.'gateways', $columns, $values, $condition);
 
                                 $configData = [];
@@ -8053,8 +8291,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     // Skip empty uploads
                                     if (empty($file['name'])) continue;
 
-                                    $max_file_size = 5 * 1024 * 1024; 
-                                    
+                                    $max_file_size = 5 * 1024 * 1024;
+
                                     $mediaUpload = json_decode(uploadImage($_FILES[$key] ?? null, $max_file_size), true);
                                     if($mediaUpload['status'] == true){
                                         $configData[$key] = $site_url.'pp-media/storage/'.$mediaUpload['file'];
@@ -8068,8 +8306,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     if(isset($response_optionValue['response'][0]['value'])){
                                         $columns = ['value', 'updated_date'];
                                         $values = [($optionValue == "") ? '--' : $optionValue, getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "id = '".$response_optionValue['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response_optionValue['response'][0]['id']."'";
+
                                         updateData($db_prefix.'gateways_parameter', $columns, $values, $condition);
                                     }else{
                                         $columns = ['brand_id', 'gateway_id', 'option_name', 'value', 'created_date', 'updated_date'];
@@ -8127,8 +8365,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     if($gateway_id == "" || $display_name == "" || $min_amount == "" || $max_amount == "" || $fixed_charge == "" || $percentage_charge == "" || $fixed_discount == "" || $percentage_discount == "" || $primary_color == "" || $text_color == "" || $btn_color == "" || $btn_text_color == ""){
                         echo json_encode(['status' => "false", 'title' => 'Incomplete Information', 'message' => 'Please fill in all required fields before proceeding.', 'csrf_token' => $new_csrf_token]);
                     }else{
-                        $max_file_size = 2 * 1024 * 1024; 
-                        
+                        $max_file_size = 2 * 1024 * 1024;
+
                         $assets_logo = json_decode(uploadImage($_FILES['gateway_logo'] ?? null, $max_file_size), true);
                         if($assets_logo['status'] == true){
                             $logo = $site_url.'pp-media/storage/'.$assets_logo['file'];
@@ -8138,7 +8376,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                         $columns = ['gateway_id', 'brand_id', 'name', 'tab', 'display', 'logo', 'currency', 'min_allow', 'max_allow', 'fixed_discount', 'percentage_discount', 'fixed_charge', 'percentage_charge', 'primary_color', 'text_color', 'btn_color', 'btn_text_color', 'status', 'created_date', 'updated_date'];
                         $values = [$gateway_id, $global_response_brand['response'][0]['brand_id'], $gateway_name, 'bank', $display_name, $logo, $currency, money_sanitize($min_amount), money_sanitize($max_amount), money_sanitize($fixed_discount), money_sanitize($percentage_discount), money_sanitize($fixed_charge), money_sanitize($percentage_charge), $primary_color, $text_color, $btn_color, $btn_text_color, $status, getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
-                        
+
                         insertData($db_prefix.'gateways', $columns, $values);
 
                         $configData = [];
@@ -8222,7 +8460,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 insertData($db_prefix.'addon', $columns, $values);
 
                                 echo json_encode(['status' => 'true', 'title' => 'Addon Created', 'message' => 'The addon has been created successfully.', 'csrf_token' => $new_csrf_token]);
-                            
+
                             }
                         }
                     }
@@ -8357,12 +8595,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                     $response_brand = json_decode(getData($db_prefix.'addon','WHERE addon_id = "'.$ItemID.'" '),true);
                     if($response_brand['status'] == true){
-                        $condition = "addon_id = '".$ItemID."'"; 
-                        
+                        $condition = "addon_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'addon', $condition);
 
-                        $condition = "addon_id = '".$ItemID."'"; 
-                        
+                        $condition = "addon_id = '".$ItemID."'";
+
                         deleteData($db_prefix.'addon_parameter', $condition);
                     }
 
@@ -8391,24 +8629,24 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             if($response_brand['status'] == true){
                                 if($actionID == "deleted"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'addons', 'delete', $global_user_response['response'][0]['role'])) {
-                                    
-                                        $condition = "addon_id = '".$itemID."'"; 
-                                        
+
+                                        $condition = "addon_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'addon', $condition);
 
-                                        $condition = "addon_id = '".$itemID."'"; 
-                                        
+                                        $condition = "addon_id = '".$itemID."'";
+
                                         deleteData($db_prefix.'addon_parameter', $condition);
                                     }
                                 }
 
                                 if($actionID == "activated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'addons', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['active', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "addon_id = '".$itemID."'"; 
-                                        
+                                        $condition = "addon_id = '".$itemID."'";
+
                                         updateData($db_prefix.'addon', $columns, $values, $condition);
 
                                     }
@@ -8416,11 +8654,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                 if($actionID == "inactivated"){
                                     if (hasPermission(json_decode($global_response_permission['response'][0]['permission'], true), 'addons', 'edit', $global_user_response['response'][0]['role'])) {
-                                    
+
                                         $columns = ['status', 'updated_date'];
                                         $values = ['inactive', getCurrentDatetime('Y-m-d H:i:s')];
-                                        $condition = "addon_id = '".$itemID."'"; 
-                                        
+                                        $condition = "addon_id = '".$itemID."'";
+
                                         updateData($db_prefix.'addon', $columns, $values, $condition);
 
                                     }
@@ -8459,8 +8697,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         if($response['status'] == true){
                             $columns = ['status', 'updated_date'];
                             $values = [$status, getCurrentDatetime('Y-m-d H:i:s')];
-                            $condition = "addon_id = '".$addon_id."'"; 
-                            
+                            $condition = "addon_id = '".$addon_id."'";
+
                             updateData($db_prefix.'addon', $columns, $values, $condition);
 
                             echo json_encode(['status' => 'true', 'title' => 'Addon Updated', 'message' => 'The addon has been updated successfully.', 'csrf_token' => $new_csrf_token]);
@@ -8506,8 +8744,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             foreach ($_FILES as $key => $file) {
                                 if (empty($file['name'])) continue;
 
-                                $max_file_size = 5 * 1024 * 1024; 
-                                
+                                $max_file_size = 5 * 1024 * 1024;
+
                                 $mediaUpload = json_decode(uploadImage($_FILES[$key] ?? null, $max_file_size), true);
                                 if($mediaUpload['status'] == true){
                                     $configData[$key] = $site_url.'pp-media/storage/'.$mediaUpload['file'];
@@ -8520,8 +8758,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 if(isset($response_optionValue['response'][0]['value'])){
                                     $columns = ['value', 'updated_date'];
                                     $values = [($optionValue == "") ? '--' : $optionValue, getCurrentDatetime('Y-m-d H:i:s')];
-                                    $condition = "id = '".$response_optionValue['response'][0]['id']."'"; 
-                                    
+                                    $condition = "id = '".$response_optionValue['response'][0]['id']."'";
+
                                     updateData($db_prefix.'addon_parameter', $columns, $values, $condition);
                                 }else{
                                     $columns = ['addon_id', 'option_name', 'value', 'created_date', 'updated_date'];
@@ -8735,7 +8973,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 $amount   = money_sanitize($row['amount']);
                                 $quantity = money_sanitize($row['quantity']);
                                 $discount = money_sanitize($row['discount']);
-                                $vatRate  = money_sanitize($row['vat']); 
+                                $vatRate  = money_sanitize($row['vat']);
 
                                 $grossAmount = money_mul($amount, $quantity);
 
@@ -8805,8 +9043,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         if($paymentRow['quantity'] > 0){
                             $columns = ['quantity'];
                             $values = [$paymentRow['quantity']-1];
-                            $condition = "ref = '".$paymentRow['ref']."'"; 
-                            
+                            $condition = "ref = '".$paymentRow['ref']."'";
+
                             updateData($db_prefix.'payment_link', $columns, $values, $condition);
                         }else{
                             echo json_encode(['status' => "false", 'title' => 'Product Not Available', 'message' => 'Cannot generate payment link because the product is out of stock.']);
@@ -8843,11 +9081,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 }
 
                                 $customFields[] = [
-                                    'type'        => $row['formType'],  
-                                    'name'        => strtolower(preg_replace('/[^a-z0-9_]/i', '_', $row['fieldName'])),                             
-                                    'label'       => $row['fieldName'],         
-                                    'options'     => $Inputoptions,      
-                                    'required'    => $row['required'],                     
+                                    'type'        => $row['formType'],
+                                    'name'        => strtolower(preg_replace('/[^a-z0-9_]/i', '_', $row['fieldName'])),
+                                    'label'       => $row['fieldName'],
+                                    'options'     => $Inputoptions,
+                                    'required'    => $row['required'],
                                 ];
                             }
                         }
@@ -8858,12 +9096,12 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $type  = $field['type'];
 
                             if ($type === 'file' && isset($_FILES[$name]) && $_FILES[$name]['error'] === 0) {
-                                $max_file_size = 5 * 1024 * 1024; 
-                                
+                                $max_file_size = 5 * 1024 * 1024;
+
                                 $mediaUpload = json_decode(uploadImage($_FILES[$name]?? null, $max_file_size), true);
                                 if($mediaUpload['status'] == true){
                                     $url = $site_url.'pp-media/storage/'.$mediaUpload['file'];
-                                    
+
                                     $form_data[] = [
                                         'label' => $label,
                                         'value' => $url
@@ -9075,13 +9313,13 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                             if (verifyPaymentTolerance($convertedAmount, $response_pending_SMSTransaction['response'][0]['amount'], $response_brand['response'][0]['payment_tolerance'])) {
                                                                 $columns = ['status', 'updated_date'];
                                                                 $values = ['used', getCurrentDatetime('Y-m-d H:i:s')];
-                                                                $condition = 'id ="'.$response_pending_SMSTransaction['response'][0]['id'].'"'; 
-                                                                
+                                                                $condition = 'id ="'.$response_pending_SMSTransaction['response'][0]['id'].'"';
+
                                                                 updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
                                                                 $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key',  'status', 'sender', 'trx_id', 'updated_date'];
                                                                 $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], 'completed', $response_pending_SMSTransaction['response'][0]['number'], $trxid, getCurrentDatetime('Y-m-d H:i:s')];
-                                                                $condition = 'id ="'.$response_transaction['response'][0]['id'].'"'; 
+                                                                $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                                 updateData($db_prefix.'transaction', $columns, $values, $condition);
 
@@ -9179,7 +9417,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                           }else{
                                                                 $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key',  'status', 'sender', 'trx_id', 'updated_date'];
                                                                 $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], 'pending', $mobile_number, $trxid, getCurrentDatetime('Y-m-d H:i:s')];
-                                                                $condition = 'id ="'.$response_transaction['response'][0]['id'].'"'; 
+                                                                $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                                 updateData($db_prefix.'transaction', $columns, $values, $condition);
                                                                 echo json_encode([ 'status' => "true", 'title' => 'Transaction Submitted', 'message' => 'Your Transaction ID has been successfully submitted' ]);
@@ -9208,7 +9446,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                         if($response_brand['status'] == true){
                                                             $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'status', 'trx_id', 'updated_date'];
                                                             $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, 'pending', $trxid, getCurrentDatetime('Y-m-d H:i:s')];
-                                                            $condition = 'id ="'.$response_transaction['response'][0]['id'].'"'; 
+                                                            $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                             updateData($db_prefix.'transaction', $columns, $values, $condition);
 
@@ -9257,8 +9495,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                     }else{
                                                         $response_brand = json_decode(getData($db_prefix.'brands',' WHERE brand_id ="'.$response_transaction['response'][0]['brand_id'].'"'),true);
                                                         if($response_brand['status'] == true){
-                                                            $max_file_size = 5 * 1024 * 1024; 
-                                                            
+                                                            $max_file_size = 5 * 1024 * 1024;
+
                                                             $mediaUpload = json_decode(uploadImage($slip ?? null, $max_file_size), true);
                                                             if($mediaUpload['status'] == true){
                                                                 $trx_slip = $site_url.'pp-media/storage/'.$mediaUpload['file'];
@@ -9269,7 +9507,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                                             $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'status', 'trx_slip', 'updated_date'];
                                                             $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, 'pending', $trx_slip, getCurrentDatetime('Y-m-d H:i:s')];
-                                                            $condition = 'id ="'.$response_transaction['response'][0]['id'].'"'; 
+                                                            $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                             updateData($db_prefix.'transaction', $columns, $values, $condition);
 
@@ -9363,8 +9601,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $columns = ['otp', 'name', 'model', 'android_level', 'app_version', 'status', 'updated_date'];
                             $values = [$otp_new, $name, $model, $android_level, $app_version, 'used', getCurrentDatetime('Y-m-d H:i:s')];
 
-                            $condition = "id = '".$response['response'][0]['id']."'"; 
-                            
+                            $condition = "id = '".$response['response'][0]['id']."'";
+
                             updateData($db_prefix.'device', $columns, $values, $condition);
 
                             echo json_encode(['status' => "true", 'token' => $otp_new]);
@@ -9393,7 +9631,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                             $responseLog = json_decode(getData($db_prefix.'browser_log','WHERE cookie = :cookie', '* FROM', $params),true);
                             if($responseLog['status'] == true){
                                 $params = [ ':a_id' => $responseLog['response'][0]['a_id'] ];
-                                
+
                                 $responseAdmin = json_decode(getData($db_prefix.'admin','WHERE a_id = :a_id', '* FROM', $params),true);
                                 if($responseAdmin['status'] == true){
 
@@ -9497,7 +9735,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 $message = trim((string)escape_string($sms['message'] ?? ''));
                                 $simslot = trim((string)escape_string($sms['simSlot'] ?? ''));
                                 $timestamp = trim((string)escape_string($sms['timestamp'] ?? ''));
-                                
+
                                 $status = 'approved';
                                 $reason = '--';
 
@@ -9528,8 +9766,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     $columns = ['last_sync'];
                                     $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                    $condition = "id = '".$response['response'][0]['id']."'"; 
-                                    
+                                    $condition = "id = '".$response['response'][0]['id']."'";
+
                                     updateData($db_prefix.'device', $columns, $values, $condition);
 
                                     echo json_encode(['status' => "false", 'title' => 'Invalid or unknown MFS message', 'message' => 'Please fill in all required fields before proceeding.']);
@@ -9553,8 +9791,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                         $columns = ['last_sync'];
                                         $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                        $condition = "id = '".$response['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response['response'][0]['id']."'";
+
                                         updateData($db_prefix.'device', $columns, $values, $condition);
 
                                         echo json_encode(['status' => "false", 'title' => 'Invalid or unknown MFS message', 'message' => 'Please fill in all required fields before proceeding.']);
@@ -9577,8 +9815,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                             $columns = ['last_sync'];
                                             $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                            $condition = "id = '".$response['response'][0]['id']."'"; 
-                                            
+                                            $condition = "id = '".$response['response'][0]['id']."'";
+
                                             updateData($db_prefix.'device', $columns, $values, $condition);
 
                                             echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.']);
@@ -9604,8 +9842,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                                                 $columns = ['current_balance', 'updated_date'];
                                                                 $values = [money_sanitize($expected_balance), getCurrentDatetime('Y-m-d H:i:s')];
-                                                                $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                                                
+                                                                $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                                                 updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                                             }else{
                                                                 $status = 'awaiting-review';
@@ -9617,8 +9855,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                                             $columns = ['current_balance', 'updated_date'];
                                                             $values = [money_sanitize($expected_balance), getCurrentDatetime('Y-m-d H:i:s')];
-                                                            $condition = "id = '".$response_balance_verification['response'][0]['id']."'"; 
-                                                            
+                                                            $condition = "id = '".$response_balance_verification['response'][0]['id']."'";
+
                                                             updateData($db_prefix.'balance_verification', $columns, $values, $condition);
                                                         }
 
@@ -9630,8 +9868,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                         $columns = ['last_sync'];
                                                         $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                                        $condition = "id = '".$response['response'][0]['id']."'"; 
-                                                        
+                                                        $condition = "id = '".$response['response'][0]['id']."'";
+
                                                         updateData($db_prefix.'device', $columns, $values, $condition);
 
                                                         echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.']);
@@ -9660,8 +9898,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                         $columns = ['last_sync'];
                                                         $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                                        $condition = "id = '".$response['response'][0]['id']."'"; 
-                                                        
+                                                        $condition = "id = '".$response['response'][0]['id']."'";
+
                                                         updateData($db_prefix.'device', $columns, $values, $condition);
 
                                                         reconcileByLongestChain($device_id, $sender_key, $type);
@@ -9680,8 +9918,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                     $columns = ['last_sync'];
                                                     $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                                    $condition = "id = '".$response['response'][0]['id']."'"; 
-                                                    
+                                                    $condition = "id = '".$response['response'][0]['id']."'";
+
                                                     updateData($db_prefix.'device', $columns, $values, $condition);
 
                                                     echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.']);
@@ -9698,8 +9936,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                 $columns = ['last_sync'];
                                                 $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                                $condition = "id = '".$response['response'][0]['id']."'"; 
-                                                
+                                                $condition = "id = '".$response['response'][0]['id']."'";
+
                                                 updateData($db_prefix.'device', $columns, $values, $condition);
 
                                                 echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.']);
@@ -9717,11 +9955,11 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                         $columns = ['last_sync'];
                                         $values = [getCurrentDatetime('Y-m-d H:i:s')];
 
-                                        $condition = "id = '".$response['response'][0]['id']."'"; 
-                                        
+                                        $condition = "id = '".$response['response'][0]['id']."'";
+
                                         updateData($db_prefix.'device', $columns, $values, $condition);
 
-                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.']); 
+                                        echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.']);
                                     }
                                 }
                             }
@@ -9773,24 +10011,24 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                         $response = json_decode(getData($db_prefix.'device','WHERE otp = :otp AND status = :status', '* FROM', $params),true);
                         if($response['status'] == true){
                             if($stored == "yes"){
-                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'approved'"; 
-                                
+                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'approved'";
+
                                 deleteData($db_prefix.'sms_data', $condition);
 
-                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'awaiting-review'"; 
-                                
+                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'awaiting-review'";
+
                                 deleteData($db_prefix.'sms_data', $condition);
                             }
 
                             if($used == "yes"){
-                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'used'"; 
-                                
+                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'used'";
+
                                 deleteData($db_prefix.'sms_data', $condition);
                             }
 
                             if($error == "yes"){
-                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'error'"; 
-                                
+                                $condition = "device_id = '".$response['response'][0]['device_id']."' AND status = 'error'";
+
                                 deleteData($db_prefix.'sms_data', $condition);
                             }
 
@@ -9824,7 +10062,7 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                     $initPendingTrscount++;
                 }
             }
-?> 
+?>
             <script>
                 function initPendingTrs(){
                     <?php
