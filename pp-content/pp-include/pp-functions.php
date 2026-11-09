@@ -550,13 +550,126 @@ function verifyPaymentTolerance(string $checkout, string $paid, string $toleranc
         return false;
     }
 
-    // max allowed = checkout + tolerance
+    // allowed range: [checkout - tolerance, checkout + tolerance]
+    $minAllowed = money_sub($checkout, $tolerance);
+    if (bccomp($minAllowed, "0", 8) < 0) {
+        $minAllowed = "0";
+    }
     $maxAllowed = money_add($checkout, $tolerance);
 
     return (
-        bccomp($paid, $checkout, 8) >= 0 &&
+        bccomp($paid, $minAllowed, 8) >= 0 &&
         bccomp($paid, $maxAllowed, 8) <= 0
     );
+}
+
+/**
+ * Reconcile any pending transactions against approved SMS records.
+ * Can be invoked by cron or immediately upon incoming SMS ingestion.
+ */
+function reconcilePendingTransactions(): array
+{
+    global $db_prefix;
+
+    if (empty($db_prefix)) {
+        return [];
+    }
+
+    $response_pending = json_decode(getData($db_prefix.'transaction', 'WHERE status = "pending" AND sender_key NOT IN ("--", "") AND trx_id NOT IN ("--", "") ORDER BY id DESC'), true);
+    if (empty($response_pending['status']) || empty($response_pending['response'])) {
+        return [];
+    }
+
+    $all_transactions = [];
+    $webhook_jobs = [];
+
+    foreach ($response_pending['response'] as $row) {
+        $trx_id = trim((string)($row['trx_id'] ?? ''));
+        $sender_key = trim((string)($row['sender_key'] ?? ''));
+        if ($trx_id === '' || $trx_id === '--' || $sender_key === '' || $sender_key === '--') {
+            continue;
+        }
+
+        $sender_type = trim((string)($row['sender_type'] ?? ''));
+
+        // First attempt: match with sender_type if available
+        $response_sms = null;
+        if ($sender_type !== '' && $sender_type !== '--') {
+            $params = [ ':sender_key' => $sender_key, ':type' => $sender_type, ':trx_id' => $trx_id, ':status' => 'approved' ];
+            $response_sms = json_decode(getData($db_prefix.'sms_data', 'WHERE sender_key = :sender_key AND type = :type AND trx_id = :trx_id AND status = :status', '* FROM', $params), true);
+        }
+
+        // Fallback: match by sender_key and trx_id regardless of sender_type (handles cases where sender_type was not stored)
+        if (empty($response_sms['status']) || empty($response_sms['response'])) {
+            $params = [ ':sender_key' => $sender_key, ':trx_id' => $trx_id, ':status' => 'approved' ];
+            $response_sms = json_decode(getData($db_prefix.'sms_data', 'WHERE sender_key = :sender_key AND trx_id = :trx_id AND status = :status', '* FROM', $params), true);
+        }
+
+        if (!empty($response_sms['status']) && !empty($response_sms['response'][0])) {
+            $sms = $response_sms['response'][0];
+
+            $response_brand = json_decode(getData($db_prefix.'brands', 'WHERE brand_id = "'.escape_string((string)$row['brand_id']).'"'), true);
+            if (!empty($response_brand['status']) && !empty($response_brand['response'][0])) {
+                $brand = $response_brand['response'][0];
+
+                if (verifyPaymentTolerance((string)$row['local_net_amount'], (string)$sms['amount'], (string)$brand['payment_tolerance'])) {
+                    // Mark SMS as used
+                    updateData($db_prefix.'sms_data', ['status', 'updated_date'], ['used', getCurrentDatetime('Y-m-d H:i:s')], 'id = "'.(int)$sms['id'].'"');
+
+                    // Mark transaction as completed and ensure sender and sender_type are set
+                    $updateCols = ['status', 'sender', 'trx_id', 'updated_date'];
+                    $updateVals = ['completed', $sms['number'], $trx_id, getCurrentDatetime('Y-m-d H:i:s')];
+                    if (!empty($sms['type']) && (empty($row['sender_type']) || $row['sender_type'] === '--')) {
+                        $updateCols[] = 'sender_type';
+                        $updateVals[] = $sms['type'];
+                    }
+                    updateData($db_prefix.'transaction', $updateCols, $updateVals, 'id = "'.(int)$row['id'].'"');
+
+                    // Build notification payload
+                    $metadata = json_decode((string)$row['metadata'], true) ?: [];
+                    $response_gateway = json_decode(getData($db_prefix.'gateways', 'WHERE brand_id = "'.escape_string((string)$brand['brand_id']).'" AND gateway_id = "'.escape_string((string)$row['gateway_id']).'"'), true);
+                    $gateway = $response_gateway['response'][0]['display'] ?? ($response_gateway['response'][0]['name'] ?? '');
+                    $customer_info = json_decode((string)$row['customer_info'], true) ?: [];
+                    $net = money_sub(money_add((string)$row['amount'], (string)$row['processing_fee']), (string)$row['discount_amount']);
+                    $timezone = ($brand['timezone'] === '--' || empty($brand['timezone'])) ? 'Asia/Dhaka' : $brand['timezone'];
+
+                    $row['status'] = 'completed';
+                    $payload = buildTransactionPayload($row, $customer_info, $gateway, (string)$sms['number'], $net, $metadata, (string)$timezone);
+                    $all_transactions[] = $payload;
+
+                    if (!empty($row['webhook_url']) && $row['webhook_url'] !== '--') {
+                        $webhook_jobs[] = [
+                            'id'       => rand(),
+                            'ref'      => $row['ref'],
+                            'brand_id' => $row['brand_id'],
+                            'url'      => $row['webhook_url'],
+                            'payload'  => $payload,
+                        ];
+                    }
+                }
+            }
+        }
+    }
+
+    if (!empty($all_transactions)) {
+        do_action('transactions.updated', $all_transactions);
+    }
+
+    if (!empty($webhook_jobs)) {
+        $results = sendIPNMulti($webhook_jobs);
+        foreach ($webhook_jobs as $job) {
+            $code = $results[$job['id']] ?? 0;
+            $status = ($code === 200) ? 'completed' : 'pending';
+            if ($status !== 'completed') {
+                $payloadJson = json_encode($job['payload'], JSON_UNESCAPED_UNICODE);
+                $columns = ['ref', 'brand_id', 'payload', 'url', 'created_date', 'updated_date'];
+                $values = [$job['ref'], $job['brand_id'], $payloadJson, $job['url'], getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
+                insertData($db_prefix.'webhook_log', $columns, $values);
+            }
+        }
+    }
+
+    return $all_transactions;
 }
 
 function dateformat($date, $format = 'd/m/Y')

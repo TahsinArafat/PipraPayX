@@ -6393,6 +6393,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                         insertData($db_prefix.'sms_data', $columns, $values);
 
+                                        if ($status == 'approved') {
+                                            reconcilePendingTransactions();
+                                        }
+
                                         echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.'.$amount, 'csrf_token' => $new_csrf_token]);
                                     }else{
                                         echo json_encode(['status' => 'false', 'title' => 'Duplicate Transaction', 'message' => 'The provided Transaction ID already exists in our system.', 'csrf_token' => $new_csrf_token]);
@@ -6429,6 +6433,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     $values = [$device, $sender_key, $phone_number, money_sanitize($amount), $currency, $transaction_id, money_sanitize($balance), $type, $entry_type, $status, $message, getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
 
                                     insertData($db_prefix.'sms_data', $columns, $values);
+
+                                    if ($status == 'approved') {
+                                        reconcilePendingTransactions();
+                                    }
 
                                     echo json_encode(['status' => 'true', 'title' => 'SMS Data Created', 'message' => 'The sms data has been created successfully.', 'csrf_token' => $new_csrf_token]);
                                 }else{
@@ -6557,6 +6565,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                     updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
+                                    if ($status == 'approved') {
+                                        reconcilePendingTransactions();
+                                    }
+
                                     echo json_encode(['status' => 'true', 'title' => 'SMS Data Updated', 'message' => 'The sms data has been updated successfully.', 'csrf_token' => $new_csrf_token]);
                                 }
                             }
@@ -6600,6 +6612,10 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                 $condition = "id = '".$itemid."'";
 
                                 updateData($db_prefix.'sms_data', $columns, $values, $condition);
+
+                                if ($status == 'approved') {
+                                    reconcilePendingTransactions();
+                                }
 
                                 echo json_encode(['status' => 'true', 'title' => 'SMS Data Updated', 'message' => 'The sms data has been updated successfully.', 'csrf_token' => $new_csrf_token]);
                             }
@@ -9317,8 +9333,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
 
                                                                 updateData($db_prefix.'sms_data', $columns, $values, $condition);
 
-                                                                $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key',  'status', 'sender', 'trx_id', 'updated_date'];
-                                                                $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], 'completed', $response_pending_SMSTransaction['response'][0]['number'], $trxid, getCurrentDatetime('Y-m-d H:i:s')];
+                                                                $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key', 'sender_type', 'status', 'sender', 'trx_id', 'updated_date'];
+                                                                $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], $gateway_info['sender_type'] ?? '', 'completed', $response_pending_SMSTransaction['response'][0]['number'], $trxid, getCurrentDatetime('Y-m-d H:i:s')];
                                                                 $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                                 updateData($db_prefix.'transaction', $columns, $values, $condition);
@@ -9415,8 +9431,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                                           if($mobile_number == ""){
                                                               echo json_encode(['status' => "false", 'title' => 'Transaction Not Matched', 'message' => 'The Transaction ID you entered could not be verified. Please try again after some time, or enter your phone number and submit for manual approval.', 'visible_number' => "true"]);
                                                           }else{
-                                                                $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key',  'status', 'sender', 'trx_id', 'updated_date'];
-                                                                $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], 'pending', $mobile_number, $trxid, getCurrentDatetime('Y-m-d H:i:s')];
+                                                                $columns = ['processing_fee', 'discount_amount', 'local_net_amount', 'local_currency', 'gateway_id', 'sender_key', 'sender_type', 'status', 'sender', 'trx_id', 'updated_date'];
+                                                                $values = [money_sanitize($totalProcessingFee), money_sanitize($totalDiscount), money_sanitize($convertedAmount), $response_gateway['response'][0]['currency'], $gateway_id, $gateway_info['sender_key'], $gateway_info['sender_type'] ?? '', 'pending', $mobile_number, $trxid, getCurrentDatetime('Y-m-d H:i:s')];
                                                                 $condition = 'id ="'.$response_transaction['response'][0]['id'].'"';
 
                                                                 updateData($db_prefix.'transaction', $columns, $values, $condition);
@@ -9963,6 +9979,8 @@ aa021689e729dc2302b47e9bdc7d1a9f8b72f95f01530da35bf3b848b188d5b1
                                     }
                                 }
                             }
+
+                            reconcilePendingTransactions();
                         }else{
                             echo json_encode(['status' => "false", 'title' => 'Authentication Failed', 'message' => 'Please try again or scan the QR code again.']);
                         }

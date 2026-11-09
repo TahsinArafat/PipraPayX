@@ -1704,64 +1704,7 @@
 
                                 //verify pending against sms data
                                 //verify pending against sms data
-                                $response_pending_transaciton = json_decode(getData($db_prefix.'transaction','WHERE status = "pending" AND sender_key NOT IN ("--", "") ORDER BY 1 DESC'), true);
-                                $all_transactions = [];
-                                foreach($response_pending_transaciton['response'] as $row){
-                                    $params = [ ':sender_key' => $row['sender_key'], ':type' => $row['sender_type'], ':trx_id' => $row['trx_id'], ':status' => 'approved' ];
-
-                                    $response_pending_SMSTransaction = json_decode(getData($db_prefix.'sms_data','WHERE sender_key = :sender_key AND type = :type AND trx_id = :trx_id AND status = :status', '* FROM', $params), true);
-                                    if($response_pending_SMSTransaction['status'] == true){
-
-                                        $response_brand = json_decode(getData($db_prefix.'brands',' WHERE brand_id ="'.$row['brand_id'].'"'),true);
-                                        if($response_brand['status'] == true){
-                                            if (verifyPaymentTolerance($row['local_net_amount'], $response_pending_SMSTransaction['response'][0]['amount'], $response_brand['response'][0]['payment_tolerance'])) {
-                                                    $columns = ['status', 'updated_date'];
-                                                    $values = ['used', getCurrentDatetime('Y-m-d H:i:s')];
-                                                    $condition = 'id ="'.$response_pending_SMSTransaction['response'][0]['id'].'"'; 
-                                                    
-                                                    updateData($db_prefix.'sms_data', $columns, $values, $condition);
-
-                                                    $columns = ['status', 'sender', 'trx_id', 'updated_date'];
-                                                    $values = ['completed', $response_pending_SMSTransaction['response'][0]['number'], $row['trx_id'], getCurrentDatetime('Y-m-d H:i:s')];
-                                                    $condition = 'id ="'.$row['id'].'"'; 
-
-                                                    updateData($db_prefix.'transaction', $columns, $values, $condition);
-
-
-                                                    $metadata = json_decode($row['metadata'], true) ?: [];
-
-                                                    $response_gateway = json_decode(getData($db_prefix.'gateways',' WHERE brand_id ="'.$response_brand['response'][0]['brand_id'].'" AND gateway_id = "'.$row['gateway_id'].'"'),true);
-
-                                                    $gateway = $response_gateway['response'][0]['display'] ?? '';
-
-                                                    $customer_info = json_decode($row['customer_info'], true) ?: [];
-
-                                                    $net = money_sub(money_add($row['amount'], $row['processing_fee']), $row['discount_amount']);
-
-                                                    $timezone = $response_brand['response'][0]['timezone'];
-
-                                                    $all_transactions[] = buildTransactionPayload($row, $customer_info, $gateway, $response_pending_SMSTransaction['response'][0]['number'], $net, $metadata, $timezone);
-
-                                                    if($row['webhook_url'] == "" || $row['webhook_url'] == "--"){
-
-                                                    }else{
-                                                        $ipnData = buildTransactionPayload($row, $customer_info, $gateway, $response_pending_SMSTransaction['response'][0]['number'], $net, $metadata, $timezone);
-
-                                                        $payload = json_encode($ipnData, JSON_UNESCAPED_UNICODE);
-
-                                                        $columns = ['ref', 'brand_id', 'payload', 'url', 'created_date', 'updated_date'];
-                                                        $values = [$row['ref'], $row['brand_id'], $payload, $row['webhook_url'], getCurrentDatetime('Y-m-d H:i:s'), getCurrentDatetime('Y-m-d H:i:s')];
-
-                                                        insertData($db_prefix.'webhook_log', $columns, $values);
-                                                    }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (!empty($all_transactions)) {
-                                    do_action('transactions.updated', $all_transactions);
-                                }
+                                reconcilePendingTransactions();
                                 //verify pending against sms data
                                 //verify pending against sms data
 
